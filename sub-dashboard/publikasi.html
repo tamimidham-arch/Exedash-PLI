@@ -12,7 +12,7 @@
         .dashboard-container { max-width: 1400px; margin: 0 auto; }
         
         .header { background: linear-gradient(135deg, #ff9800, #f57c00); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .back-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .back-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; }
         .back-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
         .status-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 11px; }
         .status-badge.online { background: #28a745; }
@@ -29,8 +29,7 @@
         .hero-stat-sub { font-size: 11px; opacity: 0.7; margin-top: 5px; }
         
         .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
-        .kpi-card { background: white; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 4px solid #ff9800; transition: transform 0.2s; }
-        .kpi-card:hover { transform: translateY(-3px); }
+        .kpi-card { background: white; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 4px solid #ff9800; }
         .kpi-value { font-size: 28px; font-weight: bold; color: #ff9800; }
         .kpi-trend { font-size: 12px; margin-top: 5px; }
         .kpi-trend.up { color: #28a745; }
@@ -107,8 +106,34 @@
         .table-responsive { overflow-x: auto; max-height: 400px; overflow-y: auto; }
         .badge { background: #e9ecef; padding: 4px 8px; border-radius: 12px; font-size: 11px; }
         
-        .loader { text-align: center; padding: 50px; background: white; border-radius: 15px; }
-        .loader i { font-size: 40px; margin-bottom: 10px; display: block; color: #ff9800; }
+        .loading-spinner {
+            text-align: center;
+            padding: 50px;
+            background: white;
+            border-radius: 15px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff9800;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .url-info {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            margin-top: 10px;
+            word-break: break-all;
+        }
         
         .formula-badge {
             background: #ff9800;
@@ -119,17 +144,25 @@
             margin-left: 8px;
         }
         
-        .warning-alert {
-            background: #fff3cd;
-            color: #856404;
-            padding: 12px;
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
             border-radius: 10px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-left: 4px solid #ffc107;
+            text-align: center;
+            margin: 20px 0;
         }
+        
+        .refresh-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .refresh-btn:hover { background: #218838; transform: translateY(-2px); }
         
         @media (max-width: 800px) { .kpi-row, .channel-performance, .row-2 { grid-template-columns: 1fr; } .hero-stats { flex-direction: column; } }
     </style>
@@ -142,206 +175,188 @@
                 <p style="font-size: 13px;">Dashboard Performa Kehumasan | Insight Strategis & Rekomendasi</p>
             </div>
             <div style="display: flex; gap: 10px;">
-                <span id="data-status" class="status-badge loading"><i class="fas fa-spinner fa-pulse"></i> Memuat...</span>
+                <span id="data-status" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Memuat Data...</span>
+                <button class="refresh-btn" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refresh Data</button>
                 <button class="back-btn" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-left"></i> Kembali</button>
             </div>
         </div>
         
         <div id="dashboard-content">
-            <div class="loader">
-                <i class="fas fa-spinner fa-pulse"></i>
-                <p>Mengambil data publikasi dari server...</p>
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Mengambil data dari Google Sheet ENGAGEMENT...</p>
                 <p style="font-size: 12px; color: #6c757d; margin-top: 10px;">
-                    <i class="fas fa-database"></i> Menggunakan Google Apps Script API
+                    <i class="fas fa-link"></i> Mengambil data dari sheet ENGAGEMENT via Apps Script
                 </p>
             </div>
         </div>
     </div>
     
     <script>
-        // ==================== KONFIGURASI ====================
+        // ==================== KONFIGURASI GOOGLE SHEET ====================
         const API_URL = 'https://script.google.com/macros/s/AKfycbywHucFlh5aJAPbVMUWGA_REGi9lrax2IjYMbPtHJoMTIYqIriHeRFnjygQMbICNJphhg/exec';
+        const SHEET_NAME = 'ENGAGEMENT';
         
         // Data follower
-        let followerData = { instagram: 5450, facebook: 837, x: 1403 };
+        const followerData = { instagram: 5450, facebook: 837, x: 1403 };
+        
+        // Variabel global
         let engagementData = [];
-        let useDemo = false;
         
-        // ==================== FUNGSI UNTUK MEMBERSIHKAN DATA ====================
-        function cleanEngagementData(rawData) {
-            if (!rawData || rawData.length === 0) return [];
-            
-            // Ambil header dari baris pertama
-            const headers = rawData[0];
-            console.log('Headers:', headers);
-            
-            // Cari indeks kolom yang diperlukan
-            const noIndex = headers.findIndex(h => h === 'No' || h === 'no');
-            const tanggalIndex = headers.findIndex(h => h === 'Tanggal' || h === 'tanggal');
-            const channelIndex = headers.findIndex(h => h === 'Channel' || h === 'channel');
-            const metodeIndex = headers.findIndex(h => h === 'Metode' || h === 'metode');
-            const igReachIndex = headers.findIndex(h => h === 'IG REACH' || h === 'ig_reach');
-            const fbReachIndex = headers.findIndex(h => h === 'FB REACH' || h === 'fb_reach');
-            const xReachIndex = headers.findIndex(h => h === 'X' || h === 'x');
-            const igPerformaIndex = headers.findIndex(h => h === 'IG PERFORMA' || h === 'ig_performa');
-            const fbPerformaIndex = headers.findIndex(h => h === 'FB PERFORMA' || h === 'fb_performa');
-            const xPerformaIndex = headers.findIndex(h => h === 'X PERFORMA' || h === 'x_performa');
-            
-            const cleanedData = [];
-            
-            // Proses setiap baris data (mulai dari baris 1)
-            for (let i = 1; i < rawData.length; i++) {
-                const row = rawData[i];
-                if (!row || row.length === 0) continue;
-                
-                // Ambil nilai No - pastikan berupa angka
-                let noValue = row[noIndex];
-                if (noValue && typeof noValue === 'string' && isNaN(parseInt(noValue))) {
-                    // Jika No bukan angka, skip baris ini (ini baris data agregat)
-                    continue;
-                }
-                
-                const no = parseInt(noValue) || i;
-                if (no < 1 || no > 100) continue; // Skip data agregat
-                
-                // Format tanggal
-                let tanggal = row[tanggalIndex];
-                if (tanggal && typeof tanggal === 'object' && tanggal.toISOString) {
-                    tanggal = tanggal.toISOString().split('T')[0];
-                } else if (tanggal && typeof tanggal === 'string') {
-                    tanggal = tanggal.split('T')[0];
-                }
-                
-                // Ambil nilai reach
-                let igReach = row[igReachIndex];
-                let fbReach = row[fbReachIndex];
-                let xReach = row[xReachIndex];
-                
-                // Konversi ke number
-                igReach = typeof igReach === 'number' ? igReach : parseInt(igReach) || 0;
-                fbReach = typeof fbReach === 'number' ? fbReach : parseInt(fbReach) || 0;
-                xReach = typeof xReach === 'number' ? xReach : parseInt(xReach) || 0;
-                
-                // Tentukan metode
-                let metode = row[metodeIndex];
-                if (metode && typeof metode === 'object' && metode.toISOString) {
-                    // Jika metode berisi tanggal, berarti ini baris agregat
-                    continue;
-                }
-                if (!metode || metode === '' || (typeof metode === 'string' && metode.includes('T'))) {
-                    metode = (igReach > 500 || fbReach > 100) ? 'Mandiri' : 'Repost';
-                }
-                
-                // Ambil performa
-                let igPerforma = row[igPerformaIndex] || 'No Data';
-                let fbPerforma = row[fbPerformaIndex] || 'No Data';
-                let xPerforma = row[xPerformaIndex] || 'No Data';
-                
-                // Hanya tambahkan jika memiliki reach > 0 atau channel valid
-                if (igReach > 0 || fbReach > 0 || xReach > 0 || (channelIndex >= 0 && row[channelIndex])) {
-                    cleanedData.push({
-                        no: no,
-                        tanggal: tanggal || '-',
-                        channel: row[channelIndex] || (igReach > 0 ? 'IG/FB' : (xReach > 0 ? 'X' : 'Unknown')),
-                        metode: metode,
-                        ig_reach: igReach,
-                        fb_reach: fbReach,
-                        x_reach: xReach,
-                        ig_performa: igPerforma,
-                        fb_performa: fbPerforma,
-                        x_performa: xPerforma
-                    });
-                }
-            }
-            
-            console.log('Data setelah dibersihkan:', cleanedData.length, 'entri');
-            return cleanedData;
-        }
-        
-        // ==================== FETCH DATA DARI GOOGLE APPS SCRIPT ====================
-        async function fetchSheetData() {
+        // ==================== FUNGSI MENGAMBIL DATA DARI APPS SCRIPT ====================
+        async function fetchDataFromGoogleSheet() {
             try {
-                console.log('Mengambil data dari Google Apps Script...');
-                console.log('URL:', API_URL);
+                // Tambahkan timestamp untuk bypass cache
+                const timestamp = new Date().getTime();
+                console.log(`Mengambil data dari Apps Script dengan timestamp: ${timestamp}`);
+                const response = await fetch(`${API_URL}?sheet=${SHEET_NAME}&_=${timestamp}`);
                 
-                const response = await fetch(`${API_URL}?sheet=ENGAGEMENT`);
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+                
                 const result = await response.json();
                 
-                console.log('Response:', result);
-                
-                if (result.status === 'success' && result.data && result.data.length > 0) {
-                    // Bersihkan data
-                    engagementData = cleanEngagementData(result.data);
-                    console.log('Data berhasil diproses:', engagementData.length, 'entri valid');
-                    
-                    if (engagementData.length === 0) {
-                        console.log('Tidak ada data valid, menggunakan demo');
-                        loadDemoData();
-                    } else {
-                        document.getElementById('data-status').innerHTML = '<i class="fas fa-check-circle"></i> Online';
-                        document.getElementById('data-status').className = 'status-badge online';
-                        useDemo = false;
-                    }
-                } else {
-                    console.log('Gagal mengambil data, menggunakan demo');
-                    loadDemoData();
-                    document.getElementById('data-status').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline - Demo';
-                    document.getElementById('data-status').className = 'status-badge error';
+                if (!result || !result.data || !Array.isArray(result.data) || result.data.length < 2) {
+                    throw new Error('Data tidak valid atau kosong dari Google Sheet');
                 }
-                renderDashboard();
+                
+                const headers = result.data[0];
+                const rows = result.data.slice(1).filter(row => row && row.length > 0 && row[0]);
+                
+                if (rows.length === 0) {
+                    throw new Error('Tidak ada data baris dalam sheet ENGAGEMENT');
+                }
+                
+                console.log('Headers dari Google Sheet:', headers);
+                
+                // Mapping data berdasarkan header yang ada di sheet
+                engagementData = rows.map(row => {
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        let value = row[index] !== undefined ? row[index] : '';
+                        obj[header] = value;
+                    });
+                    
+                    // Mengambil nilai dengan nama kolom yang sesuai
+                    const id = obj['Id'] || obj['ID'] || obj['No'] || '';
+                    const tanggal = obj['Tanggal'] || '';
+                    const channel = obj['Channel'] || '';
+                    const metode = obj['Metode'] || 'Mandiri';
+                    
+                    // Reach fields - LANGSUNG BACA NILAI NUMERIK
+                    let ig_reach = parseNumber(obj['IG_REACH'] || 0);
+                    let fb_reach = parseNumber(obj['FB_REACH'] || 0);
+                    let x_reach = parseNumber(obj['X_REACH'] || 0);
+                    
+                    // Performa fields
+                    let ig_performa = obj['IG_PERFORMA'] || 'No Data';
+                    let fb_performa = obj['FB _PERFORMA'] || obj['FB_PERFORMA'] || 'No Data';
+                    let x_performa = obj['X_PERFORMA'] || 'No Data';
+                    
+                    return {
+                        no: parseInt(id) || 0,
+                        tanggal: tanggal,
+                        channel: channel,
+                        metode: metode,
+                        ig_reach: ig_reach,
+                        fb_reach: fb_reach,
+                        x_reach: x_reach,
+                        ig_performa: ig_performa,
+                        fb_performa: fb_performa,
+                        x_performa: x_performa
+                    };
+                });
+                
+                console.log(`Data berhasil diambil: ${engagementData.length} entri`);
+                console.log('Contoh data pertama:', engagementData[0]);
+                
+                // Debug: tampilkan ringkasan data reach
+                const totalIG = engagementData.reduce((sum, item) => sum + item.ig_reach, 0);
+                const totalFB = engagementData.reduce((sum, item) => sum + item.fb_reach, 0);
+                const totalX = engagementData.reduce((sum, item) => sum + item.x_reach, 0);
+                console.log(`Total IG Reach: ${totalIG}, Total FB Reach: ${totalFB}, Total X Reach: ${totalX}`);
+                
+                if (engagementData.length === 0) {
+                    throw new Error('Tidak ada data setelah diproses');
+                }
+                
+                updateStatus('online', 'Online (Data Real-time)');
+                return true;
+                
             } catch (error) {
-                console.error('Error:', error);
-                loadDemoData();
-                document.getElementById('data-status').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline - Demo';
-                document.getElementById('data-status').className = 'status-badge error';
-                renderDashboard();
+                console.error('Error mengambil data:', error);
+                updateStatus('error', `Gagal: ${error.message}`);
+                return false;
             }
         }
         
-        // Data demo untuk fallback
-        function loadDemoData() {
-            engagementData = [
-                { no: 1, tanggal: "2026-01-01", channel: "IG/FB", metode: "Repost", ig_reach: 343, fb_reach: 41, x_reach: 0, ig_performa: "Narrow Reach", fb_performa: "Narrow Reach", x_performa: "No Data" },
-                { no: 2, tanggal: "2026-01-01", channel: "IG/FB", metode: "Mandiri", ig_reach: 276, fb_reach: 106, x_reach: 0, ig_performa: "Narrow Reach", fb_performa: "Standard Delivery", x_performa: "No Data" },
-                { no: 5, tanggal: "2026-01-19", channel: "IG/FB", metode: "Mandiri", ig_reach: 1300, fb_reach: 109, x_reach: 0, ig_performa: "Standard Delivery", fb_performa: "Standard Delivery", x_performa: "No Data" },
-                { no: 12, tanggal: "2026-02-03", channel: "IG/FB", metode: "Mandiri", ig_reach: 4100, fb_reach: 361, x_reach: 0, ig_performa: "High Penetration", fb_performa: "Standard Delivery", x_performa: "No Data" },
-                { no: 15, tanggal: "2026-02-09", channel: "IG/FB", metode: "Mandiri", ig_reach: 1800, fb_reach: 86, x_reach: 0, ig_performa: "Standard Delivery", fb_performa: "Standard Delivery", x_performa: "No Data" },
-                { no: 16, tanggal: "2026-02-10", channel: "X", metode: "Mandiri", ig_reach: 0, fb_reach: 0, x_reach: 600, ig_performa: "No Data", fb_performa: "No Data", x_performa: "Standard Delivery" },
-                { no: 21, tanggal: "2026-02-18", channel: "IG/FB", metode: "Mandiri", ig_reach: 2100, fb_reach: 100, x_reach: 14, ig_performa: "Standard Delivery", fb_performa: "Standard Delivery", x_performa: "Narrow Reach" },
-                { no: 24, tanggal: "2026-03-03", channel: "IG/FB", metode: "Mandiri", ig_reach: 1528, fb_reach: 87, x_reach: 0, ig_performa: "Standard Delivery", fb_performa: "Standard Delivery", x_performa: "No Data" }
-            ];
-            useDemo = true;
+        function parseNumber(value) {
+            if (!value || value === '0') return 0;
+            if (typeof value === 'number') return value;
+            const cleaned = String(value).replace(/,/g, '');
+            const parsed = parseInt(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
         }
         
-        // ==================== PERHITUNGAN METRIK ====================
+        function updateStatus(status, message) {
+            const statusElement = document.getElementById('data-status');
+            if (!statusElement) return;
+            statusElement.className = `status-badge ${status}`;
+            if (status === 'online') statusElement.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            else if (status === 'loading') statusElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${message}`;
+            else statusElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+        }
+        
+        // ==================== PERHITUNGAN METRIK YANG TELAH DIPERBAIKI ====================
         function calculateMetrics() {
+            if (!engagementData.length) {
+                return null;
+            }
+            
             const totalKonten = engagementData.length;
             
-            // Hitung total reach dan jumlah postingan per channel
             let totalIGReach = 0, totalFBReach = 0, totalXReach = 0;
             let igPostCount = 0, fbPostCount = 0, xPostCount = 0;
             
+            // PERBAIKAN: Hitung reach berdasarkan nilai numerik, bukan berdasarkan channel
             engagementData.forEach(item => {
-                if ((item.channel === 'IG/FB' && item.ig_reach > 0) || item.channel === 'IG') {
+                // IG Reach: hitung jika ada nilai > 0
+                if (item.ig_reach > 0) {
                     totalIGReach += item.ig_reach;
                     igPostCount++;
                 }
-                if ((item.channel === 'IG/FB' && item.fb_reach > 0) || item.channel === 'FB') {
+                
+                // FB Reach: hitung jika ada nilai > 0
+                if (item.fb_reach > 0) {
                     totalFBReach += item.fb_reach;
                     fbPostCount++;
                 }
-                if (item.channel === 'X') {
+                
+                // X Reach: hitung jika ada nilai > 0
+                if (item.x_reach > 0) {
                     totalXReach += item.x_reach;
                     xPostCount++;
                 }
             });
             
-            // Rata-rata reach per postingan
+            // Jika tidak ada postingan sama sekali, gunakan data mentah dari semua baris
+            if (igPostCount === 0 && fbPostCount === 0 && xPostCount === 0) {
+                console.warn('Tidak ada reach > 0, menggunakan semua data tanpa filter');
+                engagementData.forEach(item => {
+                    totalIGReach += item.ig_reach;
+                    totalFBReach += item.fb_reach;
+                    totalXReach += item.x_reach;
+                    if (item.ig_reach > 0) igPostCount++;
+                    if (item.fb_reach > 0) fbPostCount++;
+                    if (item.x_reach > 0) xPostCount++;
+                });
+            }
+            
             const avgIGReach = igPostCount > 0 ? totalIGReach / igPostCount : 0;
             const avgFBReach = fbPostCount > 0 ? totalFBReach / fbPostCount : 0;
             const avgXReach = xPostCount > 0 ? totalXReach / xPostCount : 0;
             
-            // Efektivitas: (Rata-rata Reach / Follower) × 100%
             const efektivitasIg = followerData.instagram > 0 ? ((avgIGReach / followerData.instagram) * 100).toFixed(1) : 0;
             const efektivitasFb = followerData.facebook > 0 ? ((avgFBReach / followerData.facebook) * 100).toFixed(1) : 0;
             const efektivitasX = followerData.x > 0 ? ((avgXReach / followerData.x) * 100).toFixed(1) : 0;
@@ -349,16 +364,17 @@
             const totalJangkauan = totalIGReach + totalFBReach + totalXReach;
             const efektivitasRata = ((parseFloat(efektivitasIg) + parseFloat(efektivitasFb) + parseFloat(efektivitasX)) / 3).toFixed(1);
             
-            // Hitung performa metode
+            // Hitung metode Mandiri vs Repost
             let totalKontenMandiri = 0, totalReachMandiri = 0;
             let totalKontenRepost = 0, totalReachRepost = 0;
             
             engagementData.forEach(item => {
                 const totalReach = item.ig_reach + item.fb_reach + item.x_reach;
-                if (item.metode === "Mandiri") {
+                const metodeLower = (item.metode || '').toLowerCase();
+                if (metodeLower === "mandiri") {
                     totalKontenMandiri++;
                     totalReachMandiri += totalReach;
-                } else if (item.metode === "Repost") {
+                } else if (metodeLower === "repost") {
                     totalKontenRepost++;
                     totalReachRepost += totalReach;
                 }
@@ -367,7 +383,6 @@
             const avgReachMandiri = totalKontenMandiri > 0 ? (totalReachMandiri / totalKontenMandiri).toFixed(0) : 0;
             const avgReachRepost = totalKontenRepost > 0 ? (totalReachRepost / totalKontenRepost).toFixed(0) : 0;
             
-            // Top 5 konten
             const topKonten = engagementData.map(item => ({
                 no: item.no,
                 tanggal: item.tanggal,
@@ -377,16 +392,15 @@
                 performa: item.ig_performa !== "No Data" ? item.ig_performa : (item.fb_performa !== "No Data" ? item.fb_performa : item.x_performa)
             })).sort((a, b) => b.totalReach - a.totalReach).slice(0, 5);
             
-            // Data untuk chart
+            // Data untuk chart reach
             let igData = [], fbData = [], xData = [], chartLabels = [];
             engagementData.forEach((item, idx) => {
-                chartLabels.push(`${item.no} - ${item.tanggal}`);
+                chartLabels.push(`${item.no || (idx+1)}`);
                 igData.push(item.ig_reach);
                 fbData.push(item.fb_reach);
                 xData.push(item.x_reach);
             });
             
-            // Channel terbaik
             const channelByEffectiveness = [
                 { name: "Instagram", effectiveness: parseFloat(efektivitasIg), icon: "fa-instagram", avgReach: avgIGReach, totalReach: totalIGReach, postCount: igPostCount },
                 { name: "Facebook", effectiveness: parseFloat(efektivitasFb), icon: "fa-facebook", avgReach: avgFBReach, totalReach: totalFBReach, postCount: fbPostCount },
@@ -401,11 +415,7 @@
             ];
             const bestReachChannel = channelByReach.reduce((a, b) => a.reach > b.reach ? a : b);
             
-            // Data topik
-            const topikValues = [12, 2, 15];
-            const topikLabels = ['Edukasi', 'Aturan', 'News/Event'];
-            const topikDominan = topikLabels[topikValues.indexOf(Math.max(...topikValues))];
-            const topikDominanCount = Math.max(...topikValues);
+            console.log('Hasil perhitungan:', { totalJangkauan, efektivitasRata, totalIGReach, totalFBReach, totalXReach });
             
             return {
                 totalKonten, totalJangkauan, efektivitasRata,
@@ -414,7 +424,7 @@
                 totalIGReach, totalFBReach, totalXReach,
                 igPostCount, fbPostCount, xPostCount,
                 avgReachMandiri, avgReachRepost, totalKontenMandiri, totalKontenRepost,
-                topKonten, topikValues, topikLabels, topikDominan, topikDominanCount,
+                topKonten,
                 bestReachChannel, bestEffectivenessChannel,
                 chartLabels, igData, fbData, xData
             };
@@ -422,17 +432,23 @@
         
         // ==================== RENDER DASHBOARD ====================
         function renderDashboard() {
-            if (engagementData.length === 0) {
-                document.getElementById('dashboard-content').innerHTML = '<div class="loader"><i class="fas fa-database"></i> Belum ada data publikasi yang valid.</div>';
+            const metrics = calculateMetrics();
+            
+            if (!metrics) {
+                document.getElementById('dashboard-content').innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
+                        <h3>Tidak Dapat Memuat Dashboard</h3>
+                        <p>Tidak ada data yang valid dari Google Sheet ENGAGEMENT.</p>
+                        <button onclick="location.reload()" style="margin-top: 15px; padding: 8px 16px; background: #ff9800; border: none; border-radius: 8px; cursor: pointer;">
+                            <i class="fas fa-sync-alt"></i> Muat Ulang
+                        </button>
+                    </div>
+                `;
                 return;
             }
             
-            const metrics = calculateMetrics();
-            const demoNote = useDemo ? '<div class="warning-alert"><i class="fas fa-info-circle"></i> Mode Demo: Menampilkan data contoh. Data dari Google Sheet sedang diproses.</div>' : '';
-            
             const html = `
-                ${demoNote}
-                
                 <div class="hero-card">
                     <div class="hero-title"><i class="fas fa-chart-line"></i> TOTAL JANGKAUAN PUBLIKASI</div>
                     <div class="hero-value">${metrics.totalJangkauan.toLocaleString()}</div>
@@ -545,15 +561,6 @@
                 
                 <div class="row-2">
                     <div class="card">
-                        <div class="card-header"><h3><i class="fas fa-chart-pie"></i> Distribusi Topik Konten</h3></div>
-                        <div class="chart-small">
-                            <canvas id="topikChart" height="180"></canvas>
-                        </div>
-                        <div class="insight-box warning" style="margin-top: 12px; padding: 8px; font-size: 12px;">
-                            <i class="fas fa-exclamation-triangle"></i> Konten Aturan hanya sedikit. Perlu penambahan konten regulasi.
-                        </div>
-                    </div>
-                    <div class="card">
                         <div class="card-header"><h3><i class="fas fa-lightbulb"></i> Rekomendasi Strategi</h3></div>
                         <div class="recommendation-card">
                             <i class="fas fa-chart-line"></i> <strong>Optimalisasi ${metrics.bestEffectivenessChannel.name}</strong> - Efektivitas ${metrics.bestEffectivenessChannel.effectiveness}% (tertinggi). Tingkatkan frekuensi konten.
@@ -562,24 +569,26 @@
                             <i class="fas fa-chart-line"></i> <strong>Perbanyak Konten Mandiri</strong> - Reach ${(metrics.avgReachMandiri/metrics.avgReachRepost).toFixed(1)}x lebih tinggi.
                         </div>
                         <div class="recommendation-card">
-                            <i class="fas fa-chart-line"></i> <strong>Seimbangkan Topik</strong> - Tambahkan konten Aturan/Regulasi.
-                        </div>
-                        <div class="recommendation-card">
                             <i class="fas fa-chart-line"></i> <strong>Replikasi Konten Sukses</strong> - Konten #${metrics.topKonten[0]?.no}, #${metrics.topKonten[1]?.no}, #${metrics.topKonten[2]?.no} memiliki performa terbaik.
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-table"></i> Detail Engagement Konten</h3><span class="badge">${engagementData.length} entri</span></div>
+                        <div class="table-responsive">
+                            <table style="width:100%">
+                                <thead>
+                                    <tr><th>Id</th><th>Tanggal</th><th>Channel</th><th>Metode</th><th>IG</th><th>FB</th><th>X</th><th>Total</th><th>Performa</th></tr>
+                                </thead>
+                                <tbody id="tableBody"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
                 
-                <div class="card">
-                    <div class="card-header"><h3><i class="fas fa-table"></i> Detail Engagement Konten</h3><span class="badge">${engagementData.length} entri</span></div>
-                    <div class="table-responsive">
-                        <table style="width:100%">
-                            <thead>
-                                <tr><th>No</th><th>Tanggal</th><th>Channel</th><th>Metode</th><th>IG</th><th>FB</th><th>X</th><th>Total</th><th>Performa</th>可能有
-                            </thead>
-                            <tbody id="tableBody"></tbody>
-                        可能的
-                    </div>
+                <div class="url-info">
+                    <i class="fas fa-link"></i> <strong>Sumber Data:</strong> Google Apps Script - Sheet ENGAGEMENT<br>
+                    <i class="fas fa-calculator"></i> <strong>Formula Efektivitas:</strong> (Rata-rata Reach per Postingan / Jumlah Follower) × 100%<br>
+                    <i class="fas fa-sync-alt"></i> <strong>Data Real-time:</strong> Dashboard ini selalu menampilkan data terbaru dari Google Sheet Anda.
                 </div>
             `;
             
@@ -599,16 +608,11 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
-                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Reach' } }, 
-                              x: { ticks: { maxRotation: 45, minRotation: 45, autoSkip: true, maxTicksLimit: 12 } } }
+                    scales: { 
+                        y: { beginAtZero: true, title: { display: true, text: 'Reach' } }, 
+                        x: { ticks: { maxRotation: 45, minRotation: 45, autoSkip: true, maxTicksLimit: 12 } } 
+                    }
                 }
-            });
-            
-            // Chart Topik
-            new Chart(document.getElementById('topikChart'), {
-                type: 'doughnut',
-                data: { labels: metrics.topikLabels, datasets: [{ data: metrics.topikValues, backgroundColor: ['#28a745', '#007bff', '#ffc107'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
             });
             
             // Tabel
@@ -628,7 +632,7 @@
                     <tr>
                         <td style="text-align:center;">${item.no}</td>
                         <td>${item.tanggal}</td>
-                        <td><i class="fas ${item.channel === 'IG/FB' ? 'fa-instagram' : (item.channel === 'X' ? 'fa-twitter' : 'fa-whatsapp')}"></i> ${item.channel}</td>
+                        <td><i class="fas ${item.channel === 'IG/FB' ? 'fa-instagram' : (item.channel === 'X' ? 'fa-twitter' : 'fa-ellipsis-h')}"></i> ${item.channel}</td>
                         <td>${item.metode}</td>
                         <td style="text-align:right;">${item.ig_reach.toLocaleString()}</td>
                         <td style="text-align:right;">${item.fb_reach.toLocaleString()}</td>
@@ -638,11 +642,51 @@
                     </tr>
                 `;
             });
-            document.getElementById('tableBody').innerHTML = tableHtml;
+            const tableBody = document.getElementById('tableBody');
+            if (tableBody) tableBody.innerHTML = tableHtml;
         }
         
-        // ==================== INISIALISASI ====================
-        fetchSheetData();
+        // Fungsi refresh manual
+        async function refreshData() {
+            updateStatus('loading', 'Menyegarkan data...');
+            const success = await fetchDataFromGoogleSheet();
+            if (success && engagementData.length > 0) {
+                renderDashboard();
+                updateStatus('online', 'Data diperbarui');
+            } else {
+                alert('Gagal memperbarui data. Periksa koneksi dan sheet.');
+                updateStatus('error', 'Gagal refresh');
+            }
+        }
+        
+        async function init() {
+            updateStatus('loading', 'Memuat Data dari Google Sheet ENGAGEMENT...');
+            const success = await fetchDataFromGoogleSheet();
+            if (success && engagementData.length > 0) {
+                renderDashboard();
+            } else {
+                document.getElementById('dashboard-content').innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
+                        <h3>Gagal Memuat Data</h3>
+                        <p>Dashboard tidak dapat mengambil data dari Google Sheet ENGAGEMENT.</p>
+                        <p>Pastikan:</p>
+                        <ul style="text-align: left; display: inline-block; margin-top: 10px;">
+                            <li>URL Apps Script sudah benar dan dapat diakses</li>
+                            <li>Sheet dengan nama "ENGAGEMENT" ada dan memiliki data</li>
+                            <li>Header kolom sesuai: Id, Tanggal, Channel, Metode, IG_REACH, FB_REACH, X_REACH, IG_PERFORMA, FB _PERFORMA, X_PERFORMA</li>
+                            <li>Koneksi internet stabil</li>
+                        </ul>
+                        <br>
+                        <button onclick="refreshData()" style="margin-top: 15px; padding: 8px 16px; background: #ff9800; border: none; border-radius: 8px; cursor: pointer;">
+                            <i class="fas fa-sync-alt"></i> Coba Lagi
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        init();
     </script>
 </body>
 </html>
