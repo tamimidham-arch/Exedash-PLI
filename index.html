@@ -335,7 +335,8 @@
             skm: [], 
             skpl: [], 
             cvc: [], 
-            publikasi: [], 
+            publikasi: [],
+            engagement: [],
             forensik: [], 
             stakeholder: [] 
         };
@@ -662,7 +663,7 @@
         
         async function fetchAllData() {
             try {
-                const sheets = ['LAYANAN', 'CHANNEL', 'RATA_RATA', 'DAMPAK_RISIKO', 'HOTSPOT', 'ADUAN', 'PENYULUHAN', 'SKM_DATA', 'SKPL_DATA', 'CVC_DATA', 'PUBLIKASI', 'FORENSIK', 'STAKEHOLDER'];
+                const sheets = ['LAYANAN', 'CHANNEL', 'RATA_RATA', 'DAMPAK_RISIKO', 'HOTSPOT', 'ADUAN', 'PENYULUHAN', 'SKM_DATA', 'SKPL_DATA', 'CVC_DATA', 'ENGAGEMENT', 'FORENSIK', 'STAKEHOLDER'];
                 const results = await Promise.all(sheets.map(s => fetchSheetData(s)));
                 dashboardData.layanan = results[0] ? parseSheetData(results[0]) : [];
                 dashboardData.channel = results[1] || [];
@@ -674,7 +675,7 @@
                 dashboardData.skm = results[7] ? parseSheetData(results[7]) : [];
                 dashboardData.skpl = results[8] ? parseSheetData(results[8]) : [];
                 dashboardData.cvc = results[9] ? parseSheetData(results[9]) : [];
-                dashboardData.publikasi = results[10] ? parseSheetData(results[10]) : [];
+                dashboardData.engagement = results[10] ? parseSheetData(results[10]) : [];
                 dashboardData.forensik = results[11] ? parseSheetData(results[11]) : [];
                 dashboardData.stakeholder = results[12] ? parseSheetData(results[12]) : [];
                 if (dashboardData.channel && dashboardData.channel.length > 0) {
@@ -784,7 +785,7 @@
                     <div class="nav-card" onclick="window.location.href='sub-dashboard/layanan.html'"><div class="nav-icon"><i class="fas fa-headset"></i></div><div class="nav-title">Layanan Informasi</div><div class="nav-value">${ytdLayanan.toLocaleString()}</div><div class="nav-unit">Total Layanan YTD</div><div class="nav-sub"><i class="fas fa-calendar-alt"></i> Bulan ini: ${currentMonthLayanan} layanan</div></div>
                     <div class="nav-card" onclick="window.location.href='sub-dashboard/penyuluhan.html'"><div class="nav-icon"><i class="fas fa-chalkboard-user"></i></div><div class="nav-title">Penyuluhan</div><div class="nav-value">${ytdPeserta.toLocaleString()}</div><div class="nav-unit">peserta YTD</div></div>
                     <div class="nav-card" onclick="window.location.href='sub-dashboard/forensik.html'"><div class="nav-icon"><i class="fas fa-newspaper"></i></div><div class="nav-title">Komunikasi Forensik</div><div class="nav-value">${framingDominan}</div><div class="nav-unit">framing dominan</div></div>
-                    <div class="nav-card" onclick="window.location.href='sub-dashboard/engagement.html'"><div class="nav-icon"><i class="fas fa-chart-line"></i></div><div class="nav-title">Publikasi</div><div class="nav-value">${ytdJangkauan.toLocaleString()}</div><div class="nav-unit">jangkauan YTD</div><div class="nav-sub"><i class="fas fa-check-circle" style="color: #28a745;"></i> Data real dari Google Sheets</div></div>
+                    <div class="nav-card" onclick="window.location.href='sub-dashboard/engagement.html'"><div class="nav-icon"><i class="fas fa-chart-line"></i></div><div class="nav-title">Engagement</div><div class="nav-value">${ytdJangkauan.toLocaleString()}</div><div class="nav-unit">jangkauan YTD</div><div class="nav-sub"><i class="fas fa-check-circle" style="color: #28a745;"></i> Data real dari Google Sheets</div></div>
                     <div class="nav-card" onclick="window.location.href='sub-dashboard/stakeholder.html'"><div class="nav-icon"><i class="fas fa-handshake"></i></div><div class="nav-title">Stakeholder</div><div class="nav-value">${dashboardData.stakeholder.filter(s=>parseInt(s.Prioritas)>=4).length}</div><div class="nav-unit">mitra prioritas</div></div>
                 </div>
                 <div class="kpi-row">
