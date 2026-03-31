@@ -184,9 +184,9 @@
         <div id="dashboard-content">
             <div class="loading-spinner">
                 <div class="spinner"></div>
-                <p>Mengambil data dari Google Sheet ENGAGEMENT...</p>
+                <p>Mengambil data dari Server yang sudah kita sepakati bersama...</p>
                 <p style="font-size: 12px; color: #6c757d; margin-top: 10px;">
-                    <i class="fas fa-link"></i> Mengambil data dari sheet ENGAGEMENT via Apps Script
+                    <i class="fas fa-link"></i> Mengambil data dari via Apps Script
                 </p>
             </div>
         </div>
@@ -648,19 +648,19 @@
         
         // Fungsi refresh manual
         async function refreshData() {
-            updateStatus('loading', 'Menyegarkan data...');
+            updateStatus('loading', 'Jangan lupa bersyukur...');
             const success = await fetchDataFromGoogleSheet();
             if (success && engagementData.length > 0) {
                 renderDashboard();
-                updateStatus('online', 'Data diperbarui');
+                updateStatus('online', 'Alhamdulillah Data sudah diperbarui');
             } else {
-                alert('Gagal memperbarui data. Periksa koneksi dan sheet.');
-                updateStatus('error', 'Gagal refresh');
+                alert('Gagal euy memperbarui data. Periksa koneksi dan sheet.');
+                updateStatus('error', 'Gagal refresh euy');
             }
         }
         
         async function init() {
-            updateStatus('loading', 'Memuat Data dari Google Sheet ENGAGEMENT...');
+            updateStatus('loading', 'Memuat Data dari Server...');
             const success = await fetchDataFromGoogleSheet();
             if (success && engagementData.length > 0) {
                 renderDashboard();
