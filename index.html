@@ -590,6 +590,17 @@
             const now = new Date();
             const reportTimestamp = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')}`;
             const channelChartId = 'channel-chart-report';
+            
+            // Helper untuk status SKM berdasarkan skala 1-5
+            function getSKMStatus(nilai) {
+                const num = parseFloat(nilai);
+                if (isNaN(num)) return { text: 'Tidak tersedia', class: 'kurang' };
+                if (num >= 4.0) return { text: '👍 Baik', class: 'baik' };
+                if (num >= 2.5) return { text: '⚠️ Cukup', class: 'cukup' };
+                return { text: '🔴 Kurang', class: 'kurang' };
+            }
+            const skmStatus = latestSKM ? getSKMStatus(latestSKM.SKM_Nilai) : { text: 'Tidak tersedia', class: 'kurang' };
+            
             const reportHtml = `
                 <div class="report-container" id="report-container">
                     <div class="report-header-infografis">
@@ -618,7 +629,7 @@
                     <div class="channel-chart-container"><h4 style="margin-bottom: 15px;"><i class="fas fa-chart-line"></i> Tren Layanan per Channel</h4><canvas id="${channelChartId}" height="200" style="width:100%;"></canvas><div class="channel-legend" id="channel-legend-report">${channelNamesData.map((ch, i) => { const style = getChannelStyle(ch); return `<div class="channel-legend-item"><div class="channel-color" style="background: ${style.color};"></div><span>${ch}</span></div>`; }).join('')}</div></div>
                     <div class="info-grid">
                         <div class="info-card"><h4><i class="fas fa-chart-simple"></i> Indikator Kinerja</h4><div class="info-item"><span class="info-label">Hotspot Darurat Rokok Ilegal</span><span class="info-value">${hotspotDarurat} lokasi</span></div><div class="info-item"><span class="info-label">Total Aduan Masyarakat</span><span class="info-value">${totalAduan} laporan</span></div><div class="info-item"><span class="info-label">Krisis Komunikasi Aktif</span><span class="info-value">${situasi.krisisAktif.length} isu</span></div></div>
-                        <div class="info-card"><h4><i class="fas fa-poll"></i> Survey Kepuasan Masyarakat (SKM)</h4><div class="info-item"><span class="info-label">Nilai SKM Terbaru</span><span class="info-value">${latestSKM?.SKM_Nilai || '--'}</span></div><div class="info-item"><span class="info-label">Triwulan</span><span class="info-value">${latestSKM?.Triwulan || '-'}</span></div><div class="info-item"><span class="info-label">Status Deadline</span><span class="info-value">${latestSKM?.Deadline_Terpenuhi === 'Ya' ? '✓ Tepat waktu' : '⚠️ Belum terpenuhi'}</span></div><div class="info-item"><span class="info-label">Stakeholder Prioritas</span><span class="info-value">${dashboardData.stakeholder.filter(s=>parseInt(s.Prioritas)>=4).length} mitra</span></div></div>
+                        <div class="info-card"><h4><i class="fas fa-poll"></i> Survey Kepuasan Masyarakat (SKM)</h4><div class="info-item"><span class="info-label">Nilai SKM Terbaru</span><span class="info-value">${latestSKM?.SKM_Nilai || '--'} (skala 1-5)</span></div><div class="info-item"><span class="info-label">Triwulan</span><span class="info-value">${latestSKM?.Triwulan || '-'} ${latestSKM?.Tahun || ''}</span></div><div class="info-item"><span class="info-label">Status Deadline</span><span class="info-value">${latestSKM?.Deadline_Terpenuhi === 'Ya' ? '✓ Tepat waktu' : (latestSKM?.Deadline_Terpenuhi ? '⚠️ Belum terpenuhi' : '-')}</span></div><div class="info-item"><span class="info-label">Keterangan</span><span class="info-value">${latestSKM?.Keterangan || '-'}</span></div></div>
                     </div>
                     <div style="text-align: center; font-size: 9px; color: #6c757d; margin-top: 20px; padding-top: 15px; border-top: 1px solid #e9ecef;"><i class="fas fa-chart-line"></i> Laporan dihasilkan otomatis dari Executive Dashboard PLI BC BOGOR<br>Data diambil dari Google Sheets | Sumber: Layanan Informasi, Penyuluhan, Forensik, Publikasi</div>
                 </div>
@@ -662,7 +673,7 @@
         
         async function fetchAllData() {
             try {
-                const sheets = ['LAYANAN', 'CHANNEL', 'RATA_RATA', 'DAMPAK_RISIKO', 'HOTSPOT', 'ADUAN', 'PENYULUHAN', 'SKM_DATA', 'SKPL_DATA', 'CVC_DATA', 'PUBLIKASI', 'FORENSIK', 'STAKEHOLDER'];
+                const sheets = ['LAYANAN', 'CHANNEL', 'RATA_RATA', 'DAMPAK_RISIKO', 'HOTSPOT', 'ADUAN', 'PENYULUHAN', 'SKM', 'SKPL_DATA', 'CVC_DATA', 'PUBLIKASI', 'FORENSIK', 'STAKEHOLDER'];
                 const results = await Promise.all(sheets.map(s => fetchSheetData(s)));
                 dashboardData.layanan = results[0] ? parseSheetData(results[0]) : [];
                 dashboardData.channel = results[1] || [];
@@ -719,7 +730,7 @@
             dashboardData.penyuluhan = [{ ID: '1', Bulan: 'Januari', Tahun: '2026', Total_Peserta: '426', Indeks_Efektivitas: '91.14' }, { ID: '2', Bulan: 'Februari', Tahun: '2026', Total_Peserta: '450', Indeks_Efektivitas: '92.50' }];
             dashboardData.publikasi = publikasiEngagementData.map(item => ({ ID: item.no, Tanggal: item.tanggal, Bulan: item.tanggal.split('/')[1] === '01' ? 'Januari' : (item.tanggal.split('/')[1] === '02' ? 'Februari' : 'Maret'), Tahun: '2026', Total_Jangkauan: (item.ig_reach + item.fb_reach + item.x_reach).toString() }));
             dashboardData.forensik = [{ ID: '1', Tanggal: '2026-01-22', Hook: 'Bea Cukai Bogor lampaui target penerimaan negara', Framing: 'Layanan', Sentiment: 'POSITIF', Level: 'LOW', Status: 'Selesai' }, { ID: '2', Tanggal: '2026-02-05', Hook: 'Forum Mahasiswa desak transparansi kasus PT Golden Agin Nusa', Framing: 'Emosional', Sentiment: 'NEGATIF', Level: 'SUBSTANTIVE', Status: 'Proses' }];
-            dashboardData.skm = [{ ID: '1', Triwulan: 'I', Tahun: '2026', SKM_Nilai: '87.5', Deadline_Terpenuhi: 'Ya' }];
+            dashboardData.skm = [{ ID: '1', Triwulan: 'I', Tahun: '2026', SKM_Nilai: '4.84', Deadline_Terpenuhi: 'Sudah terinput dengan log tanggal 02/04/2026 06:29', Keterangan: 'log tanggal 01/04/2026 10:23' }];
             dashboardData.stakeholder = [{ ID: '1', Nama: 'Follower Sosmed', Prioritas: '4' }, { ID: '2', Nama: 'Pemkot Depok', Prioritas: '5' }];
         }
         
@@ -778,6 +789,26 @@
             const totalAduan = dashboardData.aduan.length;
             const validAduan = dashboardData.aduan.filter(a => { const lat = parseFloat(a.lat); const lng = parseFloat(a.lon); return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0; }).length;
             const demoNote = useDemoData ? '<div class="error-box" style="background:#fff3cd; color:#856404;"><i class="fas fa-info-circle"></i> <strong>Mode Demo:</strong> Menampilkan data contoh. Input data real di Google Sheets.</div>' : '';
+            
+            // Helper untuk status SKM berdasarkan skala 1-5
+            function getSKMStatusClass(nilai) {
+                const num = parseFloat(nilai);
+                if (isNaN(num)) return 'kurang';
+                if (num >= 4.0) return 'baik';
+                if (num >= 2.5) return 'cukup';
+                return 'kurang';
+            }
+            function getSKMStatusText(nilai) {
+                const num = parseFloat(nilai);
+                if (isNaN(num)) return '⚠️ Tidak tersedia';
+                if (num >= 4.0) return '👍 Baik';
+                if (num >= 2.5) return '⚠️ Cukup';
+                return '🔴 Kurang';
+            }
+            
+            const skmStatusClass = latestSKM ? getSKMStatusClass(latestSKM.SKM_Nilai) : 'kurang';
+            const skmStatusText = latestSKM ? getSKMStatusText(latestSKM.SKM_Nilai) : '⚠️ Tidak tersedia';
+            
             const html = `
                 ${demoNote}
                 <div class="nav-cards">
@@ -793,7 +824,7 @@
                     <div class="kpi-card" style="border-left-color:#ff9800;" onclick="window.location.href='sub-dashboard/penyuluhan.html'"><div class="kpi-icon"><i class="fas fa-chalkboard"></i></div><div class="kpi-content"><div class="kpi-value">${avgEfektivitas}</div><div class="kpi-label">Indeks Efektivitas Edukasi</div></div></div>
                     <div class="kpi-card" style="border-left-color:#9c27b0;" onclick="window.location.href='sub-dashboard/publikasi.html'"><div class="kpi-icon"><i class="fas fa-chart-line"></i></div><div class="kpi-content"><div class="kpi-value">${ytdJangkauan.toLocaleString()}</div><div class="kpi-label">Jangkauan Publikasi (YTD)</div><div class="kpi-trend up">▲ ${((ytdJangkauan/5000)*100).toFixed(0)}% dari target</div></div></div>
                 </div>
-                <div class="skm-single-row"><div class="skm-card" onclick="window.location.href='sub-dashboard/penyuluhan.html'"><div class="card-header"><h3><i class="fas fa-poll"></i> Survey Kepuasan Masyarakat (SKM)</h3><span class="period-badge">Triwulan ${latestSKM?.Triwulan || '-'}</span></div><div class="skm-value">${latestSKM?.SKM_Nilai || '--'}</div><div class="skm-label">Nilai SKM (0-100)</div><div class="skm-status ${parseFloat(latestSKM?.SKM_Nilai) >= 80 ? 'baik' : (parseFloat(latestSKM?.SKM_Nilai) >= 60 ? 'cukup' : 'kurang')}">${parseFloat(latestSKM?.SKM_Nilai) >= 80 ? '👍 Baik' : (parseFloat(latestSKM?.SKM_Nilai) >= 60 ? '⚠️ Cukup' : '🔴 Kurang')}</div><div class="skm-deadline"><i class="fas fa-calendar-alt"></i> Deadline: 7 hari pertama bulan baru triwulan<br>Status: ${latestSKM?.Deadline_Terpenuhi === 'Ya' ? '✓ Tepat waktu' : '⚠️ Belum terpenuhi'}</div></div></div>
+                <div class="skm-single-row"><div class="skm-card" onclick="window.location.href='sub-dashboard/penyuluhan.html'"><div class="card-header"><h3><i class="fas fa-poll"></i> Survey Kepuasan Masyarakat (SKM)</h3><span class="period-badge">Triwulan ${latestSKM?.Triwulan || '-'} ${latestSKM?.Tahun || ''}</span></div><div class="skm-value">${latestSKM?.SKM_Nilai || '--'}</div><div class="skm-label">Nilai SKM (skala 1-5)</div><div class="skm-status ${skmStatusClass}">${skmStatusText}</div><div class="skm-deadline"><i class="fas fa-calendar-alt"></i> Deadline: ${latestSKM?.Deadline_Terpenuhi || '-'}<br>${latestSKM?.Keterangan ? `Keterangan: ${latestSKM.Keterangan}` : ''}</div></div></div>
                 <div class="map-container" onclick="window.location.href='sub-dashboard/layanan.html'"><div class="card-header"><h3><i class="fas fa-map-marked-alt"></i> Peta Sebaran Aduan Rokok Ilegal</h3><span class="period-badge"><i class="fas fa-chart-line"></i> Total Aduan: ${totalAduan} laporan | Terpetakan: ${validAduan} lokasi</span></div><div id="map"></div><div class="map-legend"><div class="legend-item"><div class="legend-marker small"></div> <span>Frekuensi Rendah (1-2 aduan)</span></div><div class="legend-item"><div class="legend-marker medium"></div> <span>Frekuensi Sedang (3-4 aduan)</span></div><div class="legend-item"><div class="legend-marker large"></div> <span>Frekuensi Tinggi (5+ aduan)</span></div><div class="legend-item"><i class="fas fa-info-circle"></i> <span>Klik marker untuk detail lengkap</span></div></div></div>
                 <div class="row-2" id="row-2"><div class="card"><div class="card-header"><h3><i class="fas fa-bell"></i> Peringatan Dini & Trigger Aksi</h3></div><div id="trigger-list"></div></div><div class="card"><div class="card-header"><h3><i class="fas fa-chart-simple"></i> Statistik Singkat</h3></div><div style="padding: 10px;"><div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><div><strong>📊 Total Aduan Rokok Ilegal</strong><br><span style="font-size: 24px; font-weight: bold;">${totalAduan}</span></div><div><strong>📍 Lokasi Teridentifikasi</strong><br><span style="font-size: 24px; font-weight: bold;">${validAduan}</span></div></div><div style="background: #f8f9fa; padding: 12px; border-radius: 10px;"><i class="fas fa-chart-line"></i> <strong>Insight:</strong><br>${totalAduan >= 10 ? '⚠️ Terdapat lebih dari 10 laporan aduan rokok ilegal. Perlu peningkatan operasi pengawasan.' : '✅ Jumlah aduan terkendali. Pertahankan strategi monitoring.'}</div></div></div></div>
             `;
