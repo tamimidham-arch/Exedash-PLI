@@ -5,15 +5,157 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Publikasi Dashboard - Analisis Konten & Performa</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', 'Roboto', sans-serif; background: #f0f2f5; padding: 20px; }
         .dashboard-container { max-width: 1400px; margin: 0 auto; }
         
+        /* Style untuk PDF 1 Halaman A4 - lebih kompak */
+        .pdf-one-page {
+            max-width: 210mm !important;
+            margin: 0 auto !important;
+            background: white !important;
+            padding: 5mm 8mm !important;
+            font-size: 11px !important;
+        }
+        .pdf-one-page .header,
+        .pdf-one-page .back-btn,
+        .pdf-one-page .export-btn,
+        .pdf-one-page .refresh-btn,
+        .pdf-one-page .status-badge {
+            display: none !important;
+        }
+        .pdf-one-page .hero-card {
+            padding: 12px !important;
+            margin-bottom: 8px !important;
+        }
+        .pdf-one-page .hero-value {
+            font-size: 28px !important;
+        }
+        .pdf-one-page .hero-stat {
+            padding: 6px !important;
+            min-width: auto !important;
+        }
+        .pdf-one-page .hero-stat-value {
+            font-size: 14px !important;
+        }
+        .pdf-one-page .hero-stat-sub {
+            font-size: 9px !important;
+        }
+        .pdf-one-page .kpi-row {
+            gap: 8px !important;
+            margin-bottom: 8px !important;
+        }
+        .pdf-one-page .kpi-card {
+            padding: 8px !important;
+        }
+        .pdf-one-page .kpi-value {
+            font-size: 18px !important;
+        }
+        .pdf-one-page .card {
+            padding: 10px !important;
+            margin-bottom: 8px !important;
+        }
+        .pdf-one-page .card-header {
+            margin-bottom: 8px !important;
+            padding-bottom: 5px !important;
+        }
+        .pdf-one-page .card-header h3 {
+            font-size: 12px !important;
+        }
+        .pdf-one-page .channel-performance {
+            gap: 8px !important;
+            margin-bottom: 8px !important;
+        }
+        .pdf-one-page .channel-card {
+            padding: 8px !important;
+        }
+        .pdf-one-page .channel-icon {
+            font-size: 20px !important;
+            margin-bottom: 4px !important;
+        }
+        .pdf-one-page .channel-name {
+            font-size: 12px !important;
+            margin-bottom: 4px !important;
+        }
+        .pdf-one-page .channel-percentage {
+            font-size: 20px !important;
+            margin-bottom: 2px !important;
+        }
+        .pdf-one-page .channel-avg-reach,
+        .pdf-one-page .channel-reach,
+        .pdf-one-page .channel-follower {
+            font-size: 9px !important;
+            margin-bottom: 2px !important;
+        }
+        .pdf-one-page .progress-bar-custom {
+            height: 4px !important;
+            margin-top: 4px !important;
+        }
+        .pdf-one-page .insight-box {
+            padding: 6px !important;
+            margin-bottom: 8px !important;
+            font-size: 10px !important;
+        }
+        .pdf-one-page .ranking-item {
+            padding: 4px 0 !important;
+        }
+        .pdf-one-page .ranking-rank {
+            width: 20px !important;
+            font-size: 10px !important;
+        }
+        .pdf-one-page .ranking-content {
+            font-size: 10px !important;
+        }
+        .pdf-one-page .ranking-value {
+            font-size: 10px !important;
+        }
+        .pdf-one-page .recommendation-card {
+            padding: 6px !important;
+            margin-top: 4px !important;
+            font-size: 10px !important;
+        }
+        .pdf-one-page .chart-container {
+            max-height: 150px !important;
+        }
+        .pdf-one-page .table-responsive {
+            max-height: 180px !important;
+        }
+        .pdf-one-page table {
+            font-size: 8px !important;
+        }
+        .pdf-one-page th, .pdf-one-page td {
+            padding: 4px 3px !important;
+        }
+        .pdf-one-page .url-info {
+            padding: 5px !important;
+            font-size: 8px !important;
+            margin-top: 5px !important;
+        }
+        .pdf-one-page .row-2 {
+            gap: 8px !important;
+            margin-bottom: 8px !important;
+        }
+        .pdf-one-page .badge {
+            font-size: 8px !important;
+            padding: 2px 5px !important;
+        }
+        .pdf-one-page .signal-hijau,
+        .pdf-one-page .signal-kuning,
+        .pdf-one-page .signal-merah,
+        .pdf-one-page .signal-abu {
+            padding: 2px 6px !important;
+            font-size: 8px !important;
+        }
+        
         .header { background: linear-gradient(135deg, #ff9800, #f57c00); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .back-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; }
-        .back-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .back-btn, .export-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .back-btn:hover, .export-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .export-btn { background: #28a745; }
+        .export-btn:hover { background: #218838; }
         .status-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 11px; }
         .status-badge.online { background: #28a745; }
         .status-badge.loading { background: #ffc107; color: #212529; }
@@ -164,11 +306,53 @@
         }
         .refresh-btn:hover { background: #218838; transform: translateY(-2px); }
         
-        @media (max-width: 800px) { .kpi-row, .channel-performance, .row-2 { grid-template-columns: 1fr; } .hero-stats { flex-direction: column; } }
+        /* Loading overlay untuk export */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+        .pdf-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #ff9800;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .loading-text {
+            color: white;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 800px) { 
+            .kpi-row, .channel-performance, .row-2 { grid-template-columns: 1fr; } 
+            .hero-stats { flex-direction: column; }
+        }
+        
+        @media print {
+            .back-btn, .export-btn, .refresh-btn, .header button, .status-badge {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="pdf-spinner"></div>
+        <div class="loading-text">Menyiapkan PDF 1 Halaman A4...</div>
+    </div>
+    
+    <div class="dashboard-container" id="dashboardContainer">
         <div class="header">
             <div>
                 <h1><i class="fas fa-chart-line"></i> Publikasi & Content Analytics</h1>
@@ -176,6 +360,7 @@
             </div>
             <div style="display: flex; gap: 10px;">
                 <span id="data-status" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Memuat Data...</span>
+                <button class="export-btn" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> Export PDF (1 Halaman)</button>
                 <button class="refresh-btn" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refresh Data</button>
                 <button class="back-btn" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-left"></i> Kembali</button>
             </div>
@@ -202,11 +387,11 @@
         
         // Variabel global
         let engagementData = [];
+        let currentCharts = { reachChart: null };
         
         // ==================== FUNGSI MENGAMBIL DATA DARI APPS SCRIPT ====================
         async function fetchDataFromGoogleSheet() {
             try {
-                // Tambahkan timestamp untuk bypass cache
                 const timestamp = new Date().getTime();
                 console.log(`Mengambil data dari Apps Script dengan timestamp: ${timestamp}`);
                 const response = await fetch(`${API_URL}?sheet=${SHEET_NAME}&_=${timestamp}`);
@@ -230,7 +415,6 @@
                 
                 console.log('Headers dari Google Sheet:', headers);
                 
-                // Mapping data berdasarkan header yang ada di sheet
                 engagementData = rows.map(row => {
                     const obj = {};
                     headers.forEach((header, index) => {
@@ -238,18 +422,15 @@
                         obj[header] = value;
                     });
                     
-                    // Mengambil nilai dengan nama kolom yang sesuai
                     const id = obj['Id'] || obj['ID'] || obj['No'] || '';
                     const tanggal = obj['Tanggal'] || '';
                     const channel = obj['Channel'] || '';
                     const metode = obj['Metode'] || 'Mandiri';
                     
-                    // Reach fields - LANGSUNG BACA NILAI NUMERIK
                     let ig_reach = parseNumber(obj['IG_REACH'] || 0);
                     let fb_reach = parseNumber(obj['FB_REACH'] || 0);
                     let x_reach = parseNumber(obj['X_REACH'] || 0);
                     
-                    // Performa fields
                     let ig_performa = obj['IG_PERFORMA'] || 'No Data';
                     let fb_performa = obj['FB _PERFORMA'] || obj['FB_PERFORMA'] || 'No Data';
                     let x_performa = obj['X_PERFORMA'] || 'No Data';
@@ -269,13 +450,6 @@
                 });
                 
                 console.log(`Data berhasil diambil: ${engagementData.length} entri`);
-                console.log('Contoh data pertama:', engagementData[0]);
-                
-                // Debug: tampilkan ringkasan data reach
-                const totalIG = engagementData.reduce((sum, item) => sum + item.ig_reach, 0);
-                const totalFB = engagementData.reduce((sum, item) => sum + item.fb_reach, 0);
-                const totalX = engagementData.reduce((sum, item) => sum + item.x_reach, 0);
-                console.log(`Total IG Reach: ${totalIG}, Total FB Reach: ${totalFB}, Total X Reach: ${totalX}`);
                 
                 if (engagementData.length === 0) {
                     throw new Error('Tidak ada data setelah diproses');
@@ -308,7 +482,7 @@
             else statusElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
         }
         
-        // ==================== PERHITUNGAN METRIK YANG TELAH DIPERBAIKI ====================
+        // ==================== PERHITUNGAN METRIK ====================
         function calculateMetrics() {
             if (!engagementData.length) {
                 return null;
@@ -319,30 +493,22 @@
             let totalIGReach = 0, totalFBReach = 0, totalXReach = 0;
             let igPostCount = 0, fbPostCount = 0, xPostCount = 0;
             
-            // PERBAIKAN: Hitung reach berdasarkan nilai numerik, bukan berdasarkan channel
             engagementData.forEach(item => {
-                // IG Reach: hitung jika ada nilai > 0
                 if (item.ig_reach > 0) {
                     totalIGReach += item.ig_reach;
                     igPostCount++;
                 }
-                
-                // FB Reach: hitung jika ada nilai > 0
                 if (item.fb_reach > 0) {
                     totalFBReach += item.fb_reach;
                     fbPostCount++;
                 }
-                
-                // X Reach: hitung jika ada nilai > 0
                 if (item.x_reach > 0) {
                     totalXReach += item.x_reach;
                     xPostCount++;
                 }
             });
             
-            // Jika tidak ada postingan sama sekali, gunakan data mentah dari semua baris
             if (igPostCount === 0 && fbPostCount === 0 && xPostCount === 0) {
-                console.warn('Tidak ada reach > 0, menggunakan semua data tanpa filter');
                 engagementData.forEach(item => {
                     totalIGReach += item.ig_reach;
                     totalFBReach += item.fb_reach;
@@ -364,7 +530,6 @@
             const totalJangkauan = totalIGReach + totalFBReach + totalXReach;
             const efektivitasRata = ((parseFloat(efektivitasIg) + parseFloat(efektivitasFb) + parseFloat(efektivitasX)) / 3).toFixed(1);
             
-            // Hitung metode Mandiri vs Repost
             let totalKontenMandiri = 0, totalReachMandiri = 0;
             let totalKontenRepost = 0, totalReachRepost = 0;
             
@@ -392,7 +557,6 @@
                 performa: item.ig_performa !== "No Data" ? item.ig_performa : (item.fb_performa !== "No Data" ? item.fb_performa : item.x_performa)
             })).sort((a, b) => b.totalReach - a.totalReach).slice(0, 5);
             
-            // Data untuk chart reach
             let igData = [], fbData = [], xData = [], chartLabels = [];
             engagementData.forEach((item, idx) => {
                 chartLabels.push(`${item.no || (idx+1)}`);
@@ -414,8 +578,6 @@
                 { name: "X (Twitter)", reach: totalXReach, icon: "fa-twitter" }
             ];
             const bestReachChannel = channelByReach.reduce((a, b) => a.reach > b.reach ? a : b);
-            
-            console.log('Hasil perhitungan:', { totalJangkauan, efektivitasRata, totalIGReach, totalFBReach, totalXReach });
             
             return {
                 totalKonten, totalJangkauan, efektivitasRata,
@@ -534,19 +696,19 @@
                     </div>
                     <div class="card">
                         <div class="card-header"><h3><i class="fas fa-chart-simple"></i> Performa per Metode</h3></div>
-                        <div style="margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="margin-bottom: 8px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                                 <span><i class="fas fa-pen-fancy"></i> Mandiri (${metrics.totalKontenMandiri} konten)</span>
                                 <span><strong>${metrics.avgReachMandiri.toLocaleString()}</strong> rata-rata</span>
                             </div>
                             <div class="progress-bar-custom"><div class="progress-fill-custom" style="width: ${metrics.totalKontenMandiri/metrics.totalKonten*100}%; background: #28a745;"></div></div>
-                            <div style="margin-top: 12px; display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <div style="margin-top: 6px; display: flex; justify-content: space-between; margin-bottom: 4px;">
                                 <span><i class="fas fa-retweet"></i> Repost (${metrics.totalKontenRepost} konten)</span>
                                 <span><strong>${metrics.avgReachRepost.toLocaleString()}</strong> rata-rata</span>
                             </div>
                             <div class="progress-bar-custom"><div class="progress-fill-custom" style="width: ${metrics.totalKontenRepost/metrics.totalKonten*100}%; background: #ffc107;"></div></div>
                         </div>
-                        <div class="insight-box" style="margin-top: 10px; padding: 10px;">
+                        <div class="insight-box" style="margin-top: 6px; padding: 6px;">
                             <i class="fas fa-chart-line"></i> Konten <strong>Mandiri</strong> memiliki reach ${(metrics.avgReachMandiri/metrics.avgReachRepost).toFixed(1)}x lebih tinggi.
                         </div>
                     </div>
@@ -554,8 +716,8 @@
                 
                 <div class="card">
                     <div class="card-header"><h3><i class="fas fa-chart-line"></i> Reach per Konten (IG, FB, X)</h3></div>
-                    <div class="chart-container">
-                        <canvas id="reachChart" height="250" style="max-height: 250px;"></canvas>
+                    <div class="chart-container" style="max-height: 150px;">
+                        <canvas id="reachChart" height="130" style="max-height: 130px;"></canvas>
                     </div>
                 </div>
                 
@@ -563,21 +725,21 @@
                     <div class="card">
                         <div class="card-header"><h3><i class="fas fa-lightbulb"></i> Rekomendasi Strategi</h3></div>
                         <div class="recommendation-card">
-                            <i class="fas fa-chart-line"></i> <strong>Optimalisasi ${metrics.bestEffectivenessChannel.name}</strong> - Efektivitas ${metrics.bestEffectivenessChannel.effectiveness}% (tertinggi). Tingkatkan frekuensi konten.
+                            <i class="fas fa-chart-line"></i> <strong>Optimalisasi ${metrics.bestEffectivenessChannel.name}</strong> - Efektivitas ${metrics.bestEffectivenessChannel.effectiveness}% (tertinggi).
                         </div>
                         <div class="recommendation-card">
                             <i class="fas fa-chart-line"></i> <strong>Perbanyak Konten Mandiri</strong> - Reach ${(metrics.avgReachMandiri/metrics.avgReachRepost).toFixed(1)}x lebih tinggi.
                         </div>
                         <div class="recommendation-card">
-                            <i class="fas fa-chart-line"></i> <strong>Replikasi Konten Sukses</strong> - Konten #${metrics.topKonten[0]?.no}, #${metrics.topKonten[1]?.no}, #${metrics.topKonten[2]?.no} memiliki performa terbaik.
+                            <i class="fas fa-chart-line"></i> <strong>Replikasi Konten Sukses</strong> - #${metrics.topKonten[0]?.no}, #${metrics.topKonten[1]?.no}, #${metrics.topKonten[2]?.no}.
                         </div>
                     </div>
                     <div class="card">
                         <div class="card-header"><h3><i class="fas fa-table"></i> Detail Engagement Konten</h3><span class="badge">${engagementData.length} entri</span></div>
-                        <div class="table-responsive">
+                        <div class="table-responsive" style="max-height: 160px;">
                             <table style="width:100%">
                                 <thead>
-                                    <tr><th>Id</th><th>Tanggal</th><th>Channel</th><th>Metode</th><th>IG</th><th>FB</th><th>X</th><th>Total</th><th>Performa</th></tr>
+                                    <tr><th>Id</th><th>Tgl</th><th>Channel</th><th>Metode</th><th>IG</th><th>FB</th><th>X</th><th>Total</th><th>Performa</th>  </tr>
                                 </thead>
                                 <tbody id="tableBody"></tbody>
                             </table>
@@ -586,31 +748,34 @@
                 </div>
                 
                 <div class="url-info">
-                    <i class="fas fa-link"></i> <strong>Sumber Data:</strong> Google Apps Script - Sheet ENGAGEMENT<br>
-                    <i class="fas fa-calculator"></i> <strong>Formula Efektivitas:</strong> (Rata-rata Reach per Postingan / Jumlah Follower) × 100%<br>
-                    <i class="fas fa-sync-alt"></i> <strong>Made by Fokker 1.5:</strong> Wakaf Model Dashboard to PLI Bogor 2026.
+                    <i class="fas fa-link"></i> Sumber: Google Apps Script - Sheet ENGAGEMENT | Formula: (Avg Reach / Follower) × 100%
                 </div>
             `;
             
             document.getElementById('dashboard-content').innerHTML = html;
             
-            // Chart Reach
-            new Chart(document.getElementById('reachChart'), {
+            // Chart Reach dengan ukuran lebih kecil untuk 1 halaman
+            if (currentCharts.reachChart) currentCharts.reachChart.destroy();
+            const ctx = document.getElementById('reachChart').getContext('2d');
+            currentCharts.reachChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: metrics.chartLabels,
                     datasets: [
-                        { label: 'IG', data: metrics.igData, borderColor: '#E4405F', tension: 0.2, fill: false, pointRadius: 2 },
-                        { label: 'FB', data: metrics.fbData, borderColor: '#1877F2', tension: 0.2, fill: false, pointRadius: 2 },
-                        { label: 'X', data: metrics.xData, borderColor: '#000000', tension: 0.2, fill: false, pointRadius: 2 }
+                        { label: 'IG', data: metrics.igData, borderColor: '#E4405F', tension: 0.2, fill: false, pointRadius: 2, pointBackgroundColor: '#E4405F', borderWidth: 1.5 },
+                        { label: 'FB', data: metrics.fbData, borderColor: '#1877F2', tension: 0.2, fill: false, pointRadius: 2, pointBackgroundColor: '#1877F2', borderWidth: 1.5 },
+                        { label: 'X', data: metrics.xData, borderColor: '#000000', tension: 0.2, fill: false, pointRadius: 2, pointBackgroundColor: '#000000', borderWidth: 1.5 }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 9 } } }
+                    },
                     scales: { 
-                        y: { beginAtZero: true, title: { display: true, text: 'Reach' } }, 
-                        x: { ticks: { maxRotation: 45, minRotation: 45, autoSkip: true, maxTicksLimit: 12 } } 
+                        y: { beginAtZero: true, title: { display: true, text: 'Reach', font: { size: 8 } }, ticks: { font: { size: 8 } } }, 
+                        x: { ticks: { maxRotation: 45, minRotation: 45, autoSkip: true, maxTicksLimit: 10, font: { size: 7 } } } 
                     }
                 }
             });
@@ -631,19 +796,84 @@
                 tableHtml += `
                     <tr>
                         <td style="text-align:center;">${item.no}</td>
-                        <td>${item.tanggal}</td>
-                        <td><i class="fas ${item.channel === 'IG/FB' ? 'fa-instagram' : (item.channel === 'X' ? 'fa-twitter' : 'fa-ellipsis-h')}"></i> ${item.channel}</td>
-                        <td>${item.metode}</td>
+                        <td>${item.tanggal.slice(0,5)}</td>
+                        <td>${item.channel === 'IG/FB' ? 'IG/FB' : (item.channel === 'X' ? 'X' : 'WA')}</td>
+                        <td>${item.metode === 'Mandiri' ? 'M' : 'R'}</td>
                         <td style="text-align:right;">${item.ig_reach.toLocaleString()}</td>
                         <td style="text-align:right;">${item.fb_reach.toLocaleString()}</td>
                         <td style="text-align:right;">${item.x_reach.toLocaleString()}</td>
                         <td style="text-align:right; font-weight:bold;">${totalReach.toLocaleString()}</td>
-                        <td><span class="${getSignalClass(performa)}">${performa || '-'}</span></td>
+                        <td><span class="${getSignalClass(performa)}">${performa === 'Standard Delivery' ? 'Std' : (performa === 'Narrow Reach' ? 'Narr' : (performa === 'High Penetration' ? 'High' : '-'))}</span></td>
                     </tr>
                 `;
             });
             const tableBody = document.getElementById('tableBody');
             if (tableBody) tableBody.innerHTML = tableHtml;
+        }
+        
+        // ==================== EXPORT PDF 1 HAMALAN A4 ====================
+        async function exportToPDF() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const container = document.getElementById('dashboardContainer');
+            
+            loadingOverlay.style.display = 'flex';
+            
+            try {
+                // Tambahkan class pdf-one-page untuk kompresi 1 halaman
+                container.classList.add('pdf-one-page');
+                
+                // Tunggu sebentar agar style baru diterapkan
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                // Capture dengan html2canvas
+                const canvas = await html2canvas(container, {
+                    scale: 2.2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    windowWidth: container.scrollWidth,
+                    windowHeight: container.scrollHeight
+                });
+                
+                // Kembalikan class asli
+                container.classList.remove('pdf-one-page');
+                
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                
+                // Ukuran A4 dalam mm
+                const pdfWidth = 210;
+                const pdfHeight = 297;
+                
+                // Hitung dimensi gambar agar muat dalam 1 halaman
+                const imgWidthMm = pdfWidth;
+                const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+                
+                // Jika gambar lebih tinggi dari halaman, skala ulang agar muat
+                let finalImgWidth = imgWidthMm;
+                let finalImgHeight = imgHeightMm;
+                let positionY = 0;
+                
+                if (imgHeightMm > pdfHeight) {
+                    // Hitung skala agar muat dalam 1 halaman
+                    const scale = pdfHeight / imgHeightMm;
+                    finalImgWidth = imgWidthMm * scale;
+                    finalImgHeight = pdfHeight;
+                    positionY = 0;
+                }
+                
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                pdf.addImage(imgData, 'PNG', (pdfWidth - finalImgWidth) / 2, positionY, finalImgWidth, finalImgHeight);
+                
+                pdf.save(`Publikasi_Dashboard_1Halaman_${new Date().toISOString().slice(0,10)}.pdf`);
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');
+                container.classList.remove('pdf-one-page');
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
         }
         
         // Fungsi refresh manual
@@ -670,14 +900,6 @@
                         <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
                         <h3>Gagal Memuat Data</h3>
                         <p>Dashboard tidak dapat mengambil data dari Google Sheet ENGAGEMENT.</p>
-                        <p>Pastikan:</p>
-                        <ul style="text-align: left; display: inline-block; margin-top: 10px;">
-                            <li>URL Apps Script sudah benar dan dapat diakses</li>
-                            <li>Sheet dengan nama "ENGAGEMENT" ada dan memiliki data</li>
-                            <li>Header kolom sesuai: Id, Tanggal, Channel, Metode, IG_REACH, FB_REACH, X_REACH, IG_PERFORMA, FB _PERFORMA, X_PERFORMA</li>
-                            <li>Koneksi internet stabil</li>
-                        </ul>
-                        <br>
                         <button onclick="refreshData()" style="margin-top: 15px; padding: 8px 16px; background: #ff9800; border: none; border-radius: 8px; cursor: pointer;">
                             <i class="fas fa-sync-alt"></i> Coba Lagi
                         </button>
@@ -685,6 +907,9 @@
                 `;
             }
         }
+        
+        // Event listener untuk tombol export PDF
+        document.getElementById('exportPdfBtn').addEventListener('click', exportToPDF);
         
         init();
     </script>
