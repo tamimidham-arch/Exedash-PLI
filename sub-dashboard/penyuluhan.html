@@ -18,80 +18,45 @@
         .back-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 18px; border-radius: 40px; cursor: pointer; transition: 0.2s; }
         .back-btn:hover { background: rgba(255,255,255,0.35); }
         
-        /* KPI Row - sekarang 4 kolom (SKPL dihapus) */
+        /* KPI Row */
         .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 28px; }
         .kpi-card { background: white; border-radius: 24px; padding: 20px; text-align: center; border-top: 4px solid; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
         .kpi-value { font-size: 32px; font-weight: 800; color: #1e2f4e; }
         .kpi-label { color: #5a6874; font-weight: 500; margin-top: 8px; font-size: 13px; }
         
-        /* Grid */
-        .row-2cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+        /* Grid Layouts */
         .row-3cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 28px; }
         .card { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); display: flex; flex-direction: column; }
         .card-header { display: flex; justify-content: space-between; margin-bottom: 16px; border-bottom: 2px solid #eef2f6; padding-bottom: 12px; flex-wrap: wrap; gap: 8px; }
         .card-header h3 { font-size: 1.2rem; font-weight: 700; color: #1f3b4c; display: flex; align-items: center; gap: 8px; }
         
-        /* Timeline & List */
-        .timeline { position: relative; padding-left: 12px; max-height: 320px; overflow-y: auto; flex: 1; }
-        .timeline-item { position: relative; padding-bottom: 18px; padding-left: 24px; border-left: 3px solid #c8e6d9; margin-left: 8px; }
-        .timeline-item::before { content: ''; position: absolute; left: -8px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #2e7d32; }
-        .timeline-date { font-size: 11px; color: #5f7d6b; font-weight: 500; }
-        .timeline-event { font-weight: 700; margin: 4px 0; font-size: 14px; }
-        .timeline-impact { font-size: 11px; color: #2b7a3e; background: #e9f5ec; display: inline-block; padding: 2px 10px; border-radius: 20px; margin-top: 6px; }
-        
-        .activity-list { display: flex; flex-direction: column; gap: 12px; max-height: 280px; overflow-y: auto; }
+        /* Activities & Timeline */
+        .activity-list { display: flex; flex-direction: column; gap: 12px; }
         .activity-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f8fafc; border-radius: 16px; border-left: 4px solid; }
         .activity-name { font-weight: 600; font-size: 14px; }
         .activity-count { font-weight: 800; font-size: 20px; color: #2e7d32; }
-        
+
+        .timeline-item { position: relative; padding-bottom: 18px; padding-left: 24px; border-left: 3px solid #c8e6d9; margin-left: 8px; }
+        .timeline-item::before { content: ''; position: absolute; left: -8px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #2e7d32; }
+        .timeline-date { font-size: 11px; color: #5f7d6b; font-weight: 600; }
+        .timeline-event { font-weight: 700; margin: 4px 0; font-size: 14px; }
+        .timeline-impact { font-size: 11px; color: #2b7a3e; background: #e9f5ec; display: inline-block; padding: 2px 10px; border-radius: 20px; margin-top: 6px; }
+
+        /* Tables */
+        .table-wrapper { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #e9edf2; }
         th { background: #f8fafc; font-weight: 700; color: #2c5e6e; }
-        .progress-badge { background: #e0f2e9; color: #1c6e3c; padding: 4px 12px; border-radius: 40px; font-size: 12px; font-weight: 600; display: inline-block; }
-        .deadline-alert { background: #fff3e0; color: #e68a2e; padding: 4px 12px; border-radius: 40px; font-size: 11px; }
-        .deadline-pass { background: #e8f5e9; color: #2e7d32; }
         
-        /* Tambahan untuk memastikan kedua kolom (SKM + Timeline) sejajar dengan baik */
-        .skm-timeline-wrapper {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 28px;
-        }
-        .full-width-card {
-            background: white;
-            border-radius: 24px;
-            padding: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        .timeline-container-inline {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 380px;
-        }
-        .timeline-scroll {
-            flex: 1;
-            overflow-y: auto;
-            max-height: 380px;
-        }
-        
-        @media (max-width: 1000px) { 
-            .kpi-row { grid-template-columns: repeat(2, 1fr); }
-            .row-2cols, .row-3cols, .skm-timeline-wrapper { grid-template-columns: 1fr; } 
-        }
-        
-        @media (max-width: 600px) {
-            .kpi-row { grid-template-columns: 1fr; }
-        }
-        
+        .progress-badge { background: #e0f2e9; color: #1c6e3c; padding: 4px 12px; border-radius: 40px; font-size: 12px; font-weight: 600; }
+        .deadline-alert { background: #fff3e0; color: #e68a2e; padding: 4px 12px; border-radius: 40px; font-size: 11px; font-weight: 600; }
+
+        .skm-timeline-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+        .full-width-card { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); height: 100%; }
+        .timeline-scroll { max-height: 380px; overflow-y: auto; padding-top: 10px; }
+
+        @media (max-width: 1000px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } .row-3cols, .skm-timeline-wrapper { grid-template-columns: 1fr; } }
         .loader { text-align: center; padding: 50px; }
-        .text-success { color: #2e7d32; }
-        .text-warning { color: #ed6c02; }
-        .table-wrapper { overflow-x: auto; }
     </style>
 </head>
 <body>
@@ -99,305 +64,198 @@
         <div class="header">
             <div>
                 <h1><i class="fas fa-chalkboard-user"></i> Dashboard Penyuluhan & Edukasi</h1>
-                <div style="font-size: 13px; opacity: 0.9;" id="period-info">Memuat data terbaru...</div>
+                <div style="font-size: 13px; opacity: 0.9;" id="period-info">Sinkronisasi data...</div>
             </div>
             <div style="display: flex; gap: 12px;">
                 <span id="data-status" class="status-badge"><i class="fas fa-sync-alt"></i> Memuat...</span>
                 <button class="back-btn" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-left"></i> Kembali</button>
             </div>
         </div>
-        <div id="dashboard-content"><div class="loader"><i class="fas fa-spinner fa-pulse"></i> Menyiapkan data...</div></div>
+        <div id="dashboard-content"><div class="loader"><i class="fas fa-spinner fa-pulse"></i> Menghubungkan ke database...</div></div>
     </div>
 
     <script>
-        // ==================== KONFIGURASI ====================
         const API_URL = 'https://script.google.com/macros/s/AKfycbywHucFlh5aJAPbVMUWGA_REGi9lrax2IjYMbPtHJoMTIYqIriHeRFnjygQMbICNJphhg/exec';
         
-        // Data storage
-        let dataPenyuluhan = [];      // sheet PENYULUHAN
-        let dataSKM = [];             // sheet SKM (triwulan)
-        let dataSKPL = [];            // sheet SKPL (triwulan) - data tetap diambil tapi tidak ditampilkan
-        let dataCVC = [];             // sheet CVC (bulanan)
-        
-        // ==================== AMBIL DATA ====================
+        let dataPenyuluhan = [];
+        let dataSKM = [];
+        let dataCVC = [];
+
         async function fetchAllData() {
             try {
-                const [penyuluhanRes, skmRes, skplRes, cvcRes] = await Promise.allSettled([
-                    fetch(`${API_URL}?sheet=PENYULUHAN`).then(r => r.json()).catch(() => null),
-                    fetch(`${API_URL}?sheet=SKM`).then(r => r.json()).catch(() => null),
-                    fetch(`${API_URL}?sheet=SKPL`).then(r => r.json()).catch(() => null),
-                    fetch(`${API_URL}?sheet=CVC`).then(r => r.json()).catch(() => null)
+                const [pRes, sRes, cRes] = await Promise.all([
+                    fetch(`${API_URL}?sheet=PENYULUHAN`).then(r => r.json()),
+                    fetch(`${API_URL}?sheet=SKM`).then(r => r.json()),
+                    fetch(`${API_URL}?sheet=CVC`).then(r => r.json())
                 ]);
-                
-                if (penyuluhanRes.status === 'fulfilled' && penyuluhanRes.value?.data?.length > 1) {
-                    const headers = penyuluhanRes.value.data[0];
-                    dataPenyuluhan = penyuluhanRes.value.data.slice(1).filter(r => r[0]).map(r => {
-                        let obj = {};
-                        headers.forEach((h, i) => { if (h) obj[h] = r[i] || ''; });
-                        return obj;
-                    });
-                } else {
-                    loadDemoPenyuluhan();
-                }
-                
-                if (skmRes.status === 'fulfilled' && skmRes.value?.data?.length > 1) {
-                    const headers = skmRes.value.data[0];
-                    dataSKM = skmRes.value.data.slice(1).filter(r => r[0]).map(r => {
-                        let obj = {};
-                        headers.forEach((h, i) => { if (h) obj[h] = r[i] || ''; });
-                        return obj;
-                    });
-                } else {
-                    loadDemoSKM();
-                }
-                
-                if (skplRes.status === 'fulfilled' && skplRes.value?.data?.length > 1) {
-                    const headers = skplRes.value.data[0];
-                    dataSKPL = skplRes.value.data.slice(1).filter(r => r[0]).map(r => {
-                        let obj = {};
-                        headers.forEach((h, i) => { if (h) obj[h] = r[i] || ''; });
-                        return obj;
-                    });
-                } else {
-                    loadDemoSKPL();
-                }
-                
-                if (cvcRes.status === 'fulfilled' && cvcRes.value?.data?.length > 1) {
-                    const headers = cvcRes.value.data[0];
-                    dataCVC = cvcRes.value.data.slice(1).filter(r => r[0]).map(r => {
-                        let obj = {};
-                        headers.forEach((h, i) => { if (h) obj[h] = r[i] || ''; });
-                        return obj;
-                    });
-                } else {
-                    loadDemoCVC();
-                }
-                
-                document.getElementById('data-status').innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Data Online';
-                return true;
-            } catch(e) {
-                console.warn('Gagal fetch, gunakan demo:', e);
-                loadDemoPenyuluhan();
-                loadDemoSKM();
-                loadDemoSKPL();
-                loadDemoCVC();
-                document.getElementById('data-status').innerHTML = '<i class="fas fa-database"></i> Mode Demo';
-                return false;
+
+                dataPenyuluhan = processSheetData(pRes);
+                dataSKM = processSheetData(sRes);
+                dataCVC = processSheetData(cRes);
+
+                document.getElementById('data-status').innerHTML = '<i class="fas fa-check-circle"></i> Data Sinkron';
+                renderDashboard();
+            } catch (e) {
+                console.error("Gagal memuat data:", e);
+                document.getElementById('dashboard-content').innerHTML = '<div class="loader">Terjadi kesalahan koneksi data.</div>';
             }
         }
-        
-        // ==================== DATA DEMO ====================
-        function loadDemoPenyuluhan() {
-            dataPenyuluhan = [
-                { Bulan: "Januari", Tahun: "2026", Total_Peserta: "426", Indeks_Efektivitas: "91.14", PMI: "8", UMKM: "5", DBHCT: "3", Peraturan: "4", Event: "2", Intimacy_CodeMorning: "4", Intimacy_Gathering: "2", Intimacy_FKP: "1" },
-                { Bulan: "Februari", Tahun: "2026", Total_Peserta: "450", Indeks_Efektivitas: "92.50", PMI: "9", UMKM: "6", DBHCT: "4", Peraturan: "5", Event: "3", Intimacy_CodeMorning: "5", Intimacy_Gathering: "3", Intimacy_FKP: "2" },
-                { Bulan: "Maret", Tahun: "2026", Total_Peserta: "512", Indeks_Efektivitas: "93.80", PMI: "10", UMKM: "8", DBHCT: "5", Peraturan: "6", Event: "4", Intimacy_CodeMorning: "6", Intimacy_Gathering: "4", Intimacy_FKP: "2" }
-            ];
-        }
-        
-        function loadDemoSKM() {
-            dataSKM = [
-                { Triwulan: "I", Tahun: "2026", SKM_Nilai: "87.5", Deadline_Terpenuhi: "Ya", Keterangan: "Baik" },
-                { Triwulan: "II", Tahun: "2026", SKM_Nilai: "89.2", Deadline_Terpenuhi: "Ya", Keterangan: "Meningkat" }
-            ];
-        }
-        
-        function loadDemoSKPL() {
-            dataSKPL = [
-                { Triwulan: "I", Tahun: "2026", SKPL_Nilai: "85.3", Deadline_Terpenuhi: "Ya", Keterangan: "Sesuai target" },
-                { Triwulan: "II", Tahun: "2026", SKPL_Nilai: "88.0", Deadline_Terpenuhi: "Belum", Keterangan: "Perlu percepatan" }
-            ];
-        }
-        
-        function loadDemoCVC() {
-            dataCVC = [
-                { Bulan: "Januari", Tahun: "2026", Topik_PMI: "12", Topik_DBHCT: "5", Topik_Peraturan: "8", Topik_Event: "3", Topik_UMKM: "7", Total_Kunjungan: "35" },
-                { Bulan: "Februari", Tahun: "2026", Topik_PMI: "14", Topik_DBHCT: "6", Topik_Peraturan: "9", Topik_Event: "4", Topik_UMKM: "8", Total_Kunjungan: "41" },
-                { Bulan: "Maret", Tahun: "2026", Topik_PMI: "16", Topik_DBHCT: "7", Topik_Peraturan: "11", Topik_Event: "5", Topik_UMKM: "10", Total_Kunjungan: "49" }
-            ];
-        }
-        
-        // ==================== RENDER DASHBOARD ====================
-        // SKPL Card telah dihapus dari KPI Row
-        function renderDashboard() {
-            if (!dataPenyuluhan.length) {
-                document.getElementById('dashboard-content').innerHTML = '<div class="loader">Belum ada data penyuluhan</div>';
-                return;
-            }
-            
-            const curr = dataPenyuluhan[dataPenyuluhan.length - 1];
-            const ytdPeserta = dataPenyuluhan.reduce((s, i) => s + (parseInt(i.Total_Peserta) || 0), 0);
-            // Hitung rata-rata indeks efektivitas (hanya data valid)
-            const dataEfektif = dataPenyuluhan.filter(i => {
-                const val = parseFloat(i.Indeks_Efektivitas);
-                return !isNaN(val) && val > 0;
+
+        function processSheetData(res) {
+            if (!res || !res.data || res.data.length < 2) return [];
+            const headers = res.data[0];
+            return res.data.slice(1).filter(r => r[0]).map(r => {
+                let obj = {};
+                headers.forEach((h, i) => { if (h) obj[h.trim()] = r[i]; });
+                return obj;
             });
-            const avgEfektivitas = dataEfektif.length > 0 
-                ? (dataEfektif.reduce((s, i) => s + parseFloat(i.Indeks_Efektivitas), 0) / dataEfektif.length).toFixed(1)
-                : '0';
-            
-            // Hitung total kegiatan per topik sosialisasi
-            const totalPMI = dataPenyuluhan.reduce((s, i) => s + (parseInt(i.PMI) || 0), 0);
-            const totalUMKM = dataPenyuluhan.reduce((s, i) => s + (parseInt(i.UMKM) || 0), 0);
-            const totalDBHCT = dataPenyuluhan.reduce((s, i) => s + (parseInt(i.DBHCT) || 0), 0);
-            const totalPeraturan = dataPenyuluhan.reduce((s, i) => s + (parseInt(i.Peraturan) || 0), 0);
-            const totalEvent = dataPenyuluhan.reduce((s, i) => s + (parseInt(i.Event) || 0), 0);
-            
-            // Kegiatan Intimacy
-            const totalCodeMorning = dataPenyuluhan.reduce((s, i) => s + (parseInt(i.Intimacy_CodeMorning) || 0), 0);
-            const totalGathering = dataPenyuluhan.reduce((s, i) => s + (parseInt(i.Intimacy_Gathering) || 0), 0);
-            const totalFKP = dataPenyuluhan.reduce((s, i) => s + (parseInt(i.Intimacy_FKP) || 0), 0);
-            
-            // CVC total
+        }
+
+        function renderDashboard() {
+            // --- LOGIKA PERBAIKAN: MENCARI SKM TERBARU YANG SUDAH TERISI ---
+            const skmTerisi = dataSKM.filter(item => item.SKM_Nilai && item.SKM_Nilai !== "");
+            const skmTerbaru = skmTerisi.length > 0 ? skmTerisi[skmTerisi.length - 1] : { SKM_Nilai: "-", Triwulan: "-" };
+
+            const totalPeserta = dataPenyuluhan.reduce((s, i) => s + (parseInt(i.Total_Peserta) || 0), 0);
+            const avgEfektivitas = (dataPenyuluhan.reduce((s, i) => s + (parseFloat(i.Indeks_Efektivitas) || 0), 0) / (dataPenyuluhan.length || 1)).toFixed(2);
             const totalCVC = dataCVC.reduce((s, i) => s + (parseInt(i.Total_Kunjungan) || 0), 0);
-            
-            // SKM terbaru
-            const skmTerbaru = dataSKM[dataSKM.length - 1] || {};
-            
-            document.getElementById('period-info').innerHTML = `Bulan aktif: ${curr.Bulan} ${curr.Tahun} | Total YTD: ${ytdPeserta.toLocaleString()} peserta`;
-            
-            // KPI ROW sekarang hanya 4 kolom (SKPL Card dihapus)
+
             const html = `
-                <!-- KPI Utama (4 kolom) - SKPL telah dihapus -->
                 <div class="kpi-row">
                     <div class="kpi-card" style="border-top-color:#2e7d32;">
-                        <div class="kpi-value">${ytdPeserta.toLocaleString()}</div>
-                        <div class="kpi-label">Total Jangkauan Peserta YTD</div>
+                        <div class="kpi-value">${totalPeserta.toLocaleString()}</div>
+                        <div class="kpi-label">Total Peserta YTD</div>
                     </div>
                     <div class="kpi-card" style="border-top-color:#1976d2;">
                         <div class="kpi-value">${avgEfektivitas}</div>
-                        <div class="kpi-label">Indeks Efektivitas Komunikasi (Rata-rata)</div>
+                        <div class="kpi-label">Rata-rata Efektivitas (%)</div>
                     </div>
                     <div class="kpi-card" style="border-top-color:#ff9800;">
-                        <div class="kpi-value">${skmTerbaru.SKM_Nilai || '-'}</div>
-                        <div class="kpi-label">SKM Terbaru (Triwulan ${skmTerbaru.Triwulan || '-'})</div>
+                        <div class="kpi-value" id="kpi-skm-val">${skmTerbaru.SKM_Nilai}</div>
+                        <div class="kpi-label">SKM Terbaru (Triwulan ${skmTerbaru.Triwulan})</div>
                     </div>
                     <div class="kpi-card" style="border-top-color:#00acc1;">
                         <div class="kpi-value">${totalCVC}</div>
-                        <div class="kpi-label">Total CVC (Kunjungan)</div>
+                        <div class="kpi-label">Total CVC Kunjungan</div>
                     </div>
                 </div>
-                
-                <!-- 3 Kolom: Sosialisasi, Intimacy, CVC -->
+
                 <div class="row-3cols">
                     <div class="card">
-                        <div class="card-header"><h3><i class="fas fa-chalkboard"></i> Sosialisasi per Topik</h3><i class="fas fa-chart-simple"></i></div>
-                        <canvas id="sosialisasiChart" style="height: 200px; width:100%;"></canvas>
-                        <div style="margin-top: 12px; font-size:12px; text-align:center;">Jumlah kegiatan (YTD)</div>
+                        <div class="card-header"><h3><i class="fas fa-chalkboard"></i> Sosialisasi</h3></div>
+                        <canvas id="sosialisasiChart" style="height:200px;"></canvas>
                     </div>
                     <div class="card">
-                        <div class="card-header"><h3><i class="fas fa-handshake"></i> Kegiatan Intimacy</h3><i class="fas fa-calendar"></i></div>
-                        <div class="activity-list">
-                            <div class="activity-item" style="border-left-color:#2e7d32;"><span class="activity-name"><i class="fas fa-coffee"></i> Code Morning</span><span class="activity-count">${totalCodeMorning}</span></div>
-                            <div class="activity-item" style="border-left-color:#ff9800;"><span class="activity-name"><i class="fas fa-users"></i> Gathering</span><span class="activity-count">${totalGathering}</span></div>
-                            <div class="activity-item" style="border-left-color:#1976d2;"><span class="activity-name"><i class="fas fa-comments"></i> Forum Komunikasi Publik (FKP)</span><span class="activity-count">${totalFKP}</span></div>
-                        </div>
+                        <div class="card-header"><h3><i class="fas fa-handshake"></i> Intimacy</h3></div>
+                        <div class="activity-list" id="intimacyList"></div>
                     </div>
                     <div class="card">
-                        <div class="card-header"><h3><i class="fas fa-building"></i> Customs Visit Customer (CVC)</h3><i class="fas fa-chart-line"></i></div>
-                        <canvas id="cvcChart" style="height: 180px; width:100%;"></canvas>
-                        <div style="margin-top: 8px; text-align:center; font-size:12px;">Kunjungan per topik (YTD)</div>
+                        <div class="card-header"><h3><i class="fas fa-building"></i> Topik CVC</h3></div>
+                        <canvas id="cvcChart" style="height:200px;"></canvas>
                     </div>
                 </div>
-                
-                <!-- SKM berdampingan dengan Lini Masa (Timeline) -->
+
                 <div class="skm-timeline-wrapper">
-                    <!-- Bagian Kiri: SKM (Survey Kepuasan Masyarakat) -->
                     <div class="full-width-card">
-                        <div class="card-header"><h3><i class="fas fa-poll"></i> Survey Kepuasan Masyarakat (SKM)</h3><span class="deadline-alert"><i class="fas fa-clock"></i> Deadline: 7 hari pertama bulan baru</span></div>
+                        <div class="card-header"><h3><i class="fas fa-poll"></i> Tabel SKM</h3><span class="deadline-alert">Deadline: 7 hari awal bulan</span></div>
                         <div class="table-wrapper">
                             <table>
-                                <thead>
-                                    <tr><th>Triwulan</th><th>Nilai</th><th>Status Deadline</th><th>Keterangan</th></tr>
-                                </thead>
-                                <tbody id="skmTable"></tbody>
+                                <thead><tr><th>Triwulan</th><th>Nilai</th><th>Status</th><th>Keterangan Log</th></tr></thead>
+                                <tbody id="skmTableBody"></tbody>
                             </table>
                         </div>
                     </div>
-                    
-                    <!-- Bagian Kanan: Lini Masa Kegiatan Penyuluhan -->
-                    <div class="full-width-card timeline-container-inline">
-                        <div class="card-header"><h3><i class="fas fa-timeline"></i> Linimasa Kegiatan Penyuluhan</h3><i class="fas fa-history"></i></div>
-                        <div class="timeline-scroll" id="timelineContainer"></div>
+                    <div class="full-width-card">
+                        <div class="card-header"><h3><i class="fas fa-history"></i> Lini Masa</h3></div>
+                        <div class="timeline-scroll" id="timelineList"></div>
                     </div>
                 </div>
             `;
-            
             document.getElementById('dashboard-content').innerHTML = html;
             
-            // Render Chart Sosialisasi
+            renderCharts();
+            renderTableSKM();
+            renderLists();
+        }
+
+        function renderTableSKM() {
+            const body = document.getElementById('skmTableBody');
+            body.innerHTML = dataSKM.map(s => {
+                // Deteksi status berdasarkan isi kolom Deadline_Terpenuhi
+                const isDone = s.Deadline_Terpenuhi && s.Deadline_Terpenuhi.toString().includes("Sudah");
+                return `
+                    <tr>
+                        <td>Triwulan ${s.Triwulan} ${s.Tahun}</td>
+                        <td><strong>${s.SKM_Nilai || '-'}</strong></td>
+                        <td><span class="${isDone ? 'progress-badge' : 'deadline-alert'}">${isDone ? '✓ Terinput' : '⚠️ Belum'}</span></td>
+                        <td style="font-size:11px; color:#666;">${s.Deadline_Terpenuhi || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderLists() {
+            // Render Intimacy
+            const intm = {
+                Code: dataPenyuluhan.reduce((s, i) => s + (parseInt(i.Intimacy_CodeMorning) || 0), 0),
+                Gathering: dataPenyuluhan.reduce((s, i) => s + (parseInt(i.Intimacy_Gathering) || 0), 0),
+                FKP: dataPenyuluhan.reduce((s, i) => s + (parseInt(i.Intimacy_FKP) || 0), 0)
+            };
+            document.getElementById('intimacyList').innerHTML = `
+                <div class="activity-item" style="border-left-color:#2e7d32;"><span class="activity-name">Code Morning</span><span class="activity-count">${intm.Code}</span></div>
+                <div class="activity-item" style="border-left-color:#ff9800;"><span class="activity-name">Gathering</span><span class="activity-count">${intm.Gathering}</span></div>
+                <div class="activity-item" style="border-left-color:#1976d2;"><span class="activity-name">FKP</span><span class="activity-count">${intm.FKP}</span></div>
+            `;
+
+            // Render Timeline
+            document.getElementById('timelineList').innerHTML = dataPenyuluhan.slice(-5).reverse().map(item => `
+                <div class="timeline-item">
+                    <div class="timeline-date">${item.Bulan} ${item.Tahun}</div>
+                    <div class="timeline-event">${item.Total_Peserta} Peserta - Efektivitas ${item.Indeks_Efektivitas}%</div>
+                    <div class="timeline-impact">PMI: ${item.PMI} | UMKM: ${item.UMKM}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderCharts() {
             const ctxSos = document.getElementById('sosialisasiChart').getContext('2d');
             new Chart(ctxSos, {
                 type: 'bar',
                 data: {
-                    labels: ['PMI', 'DBHCT', 'Peraturan', 'Event', 'UMKM'],
-                    datasets: [{ label: 'Jumlah Kegiatan', data: [totalPMI, totalDBHCT, totalPeraturan, totalEvent, totalUMKM], backgroundColor: ['#2e7d32', '#ff9800', '#1976d2', '#9c27b0', '#00acc1'], borderRadius: 8 }]
+                    labels: ['PMI', 'UMKM', 'DBHCT', 'Aturan'],
+                    datasets: [{
+                        label: 'Giat',
+                        data: [
+                            dataPenyuluhan.reduce((s, i) => s + (parseInt(i.PMI) || 0), 0),
+                            dataPenyuluhan.reduce((s, i) => s + (parseInt(i.UMKM) || 0), 0),
+                            dataPenyuluhan.reduce((s, i) => s + (parseInt(i.DBHCT) || 0), 0),
+                            dataPenyuluhan.reduce((s, i) => s + (parseInt(i.Peraturan) || 0), 0)
+                        ],
+                        backgroundColor: ['#2e7d32', '#ff9800', '#1976d2', '#9c27b0']
+                    }]
                 },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+                options: { plugins: { legend: { display: false } } }
             });
-            
-            // Render Chart CVC per topik
-            const cvcByTopic = {
-                PMI: dataCVC.reduce((s, i) => s + (parseInt(i.Topik_PMI) || 0), 0),
-                DBHCT: dataCVC.reduce((s, i) => s + (parseInt(i.Topik_DBHCT) || 0), 0),
-                Peraturan: dataCVC.reduce((s, i) => s + (parseInt(i.Topik_Peraturan) || 0), 0),
-                Event: dataCVC.reduce((s, i) => s + (parseInt(i.Topik_Event) || 0), 0),
-                UMKM: dataCVC.reduce((s, i) => s + (parseInt(i.Topik_UMKM) || 0), 0)
-            };
+
             const ctxCVC = document.getElementById('cvcChart').getContext('2d');
             new Chart(ctxCVC, {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(cvcByTopic),
-                    datasets: [{ data: Object.values(cvcByTopic), backgroundColor: ['#2e7d32', '#ff9800', '#1976d2', '#9c27b0', '#00acc1'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+                    labels: ['PMI', 'UMKM', 'Aturan'],
+                    datasets: [{
+                        data: [
+                            dataCVC.reduce((s, i) => s + (parseInt(i.Topik_PMI) || 0), 0),
+                            dataCVC.reduce((s, i) => s + (parseInt(i.Topik_UMKM) || 0), 0),
+                            dataCVC.reduce((s, i) => s + (parseInt(i.Topik_Peraturan) || 0), 0)
+                        ],
+                        backgroundColor: ['#2e7d32', '#ff9800', '#1976d2']
+                    }]
+                }
             });
-            
-            // Tabel SKM
-            const skmBody = document.getElementById('skmTable');
-            if (skmBody) {
-                skmBody.innerHTML = dataSKM.map(s => `
-                    <tr>
-                        <td>Triwulan ${s.Triwulan} ${s.Tahun}</td>
-                        <td><strong>${s.SKM_Nilai}</strong></td>
-                        <td><span class="${s.Deadline_Terpenuhi === 'Ya' ? 'progress-badge' : 'deadline-alert'}">${s.Deadline_Terpenuhi === 'Ya' ? '✓ Tepat waktu' : '⚠️ Belum terpenuhi'}</span></td>
-                        <td>${s.Keterangan || '-'}</td>
-                    </tr>
-                `).join('');
-            }
-            
-            // Timeline (lini masa) dari data penyuluhan
-            const timelineContainer = document.getElementById('timelineContainer');
-            if (timelineContainer) {
-                const sortedTimeline = [...dataPenyuluhan].sort((a,b) => {
-                    const bulanMap = { Januari:1, Februari:2, Maret:3, April:4, Mei:5, Juni:6, Juli:7, Agustus:8, September:9, Oktober:10, November:11, Desember:12 };
-                    const yearA = parseInt(a.Tahun) || 0;
-                    const yearB = parseInt(b.Tahun) || 0;
-                    if(yearA !== yearB) return yearB - yearA;
-                    return (bulanMap[a.Bulan] || 0) - (bulanMap[b.Bulan] || 0);
-                });
-                const timelineItems = sortedTimeline.slice(0, 6);
-                timelineContainer.innerHTML = timelineItems.map(item => {
-                    const totalIntimacy = (parseInt(item.Intimacy_CodeMorning)||0) + (parseInt(item.Intimacy_Gathering)||0) + (parseInt(item.Intimacy_FKP)||0);
-                    return `
-                        <div class="timeline-item">
-                            <div class="timeline-date">${item.Bulan} ${item.Tahun}</div>
-                            <div class="timeline-event"><i class="fas fa-chalkboard-user"></i> ${item.Total_Peserta} peserta | Efektivitas: ${item.Indeks_Efektivitas}</div>
-                            <div class="timeline-impact">📊 ${item.PMI || 0} giat PMI · ${item.UMKM || 0} UMKM · Intimacy: ${totalIntimacy} kegiatan</div>
-                        </div>
-                    `;
-                }).join('');
-                if(timelineItems.length === 0) timelineContainer.innerHTML = '<div style="padding:20px; text-align:center;">Belum ada data linimasa</div>';
-            }
         }
-        
-        // Inisialisasi
-        async function init() {
-            await fetchAllData();
-            renderDashboard();
-        }
-        init();
+
+        fetchAllData();
     </script>
 </body>
 </html>
+
