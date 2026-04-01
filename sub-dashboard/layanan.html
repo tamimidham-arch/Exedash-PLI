@@ -247,9 +247,9 @@
         let channelConfig = [];
         let dataDampak = [];
         let dataAduan = [];
-        let dataKategoriLayanan = []; // Data kategori layanan
-        let kategoriHeaders = []; // Nama kategori
-        let kategoriBulanData = []; // Data per bulan untuk kategori
+        let dataKategoriLayanan = [];
+        let kategoriHeaders = [];
+        let kategoriBulanData = [];
         let useDemo = false;
         let map = null;
         let currentMarkers = [];
@@ -394,7 +394,6 @@
             const headers = [];
             const bulanData = [];
             
-            // Header: Index 0 adalah ID, 1 adalah KATEGORI FAQ, 2-13 adalah bulan Jan-Des, 14 adalah TOTAL
             const headerRow = rawData[0];
             if (headerRow && headerRow.length > 2) {
                 for (let i = 2; i <= 13 && i < headerRow.length; i++) {
@@ -402,7 +401,6 @@
                 }
             }
             
-            // Parse data per kategori
             for (let i = 1; i < rawData.length; i++) {
                 const row = rawData[i];
                 if (!row || row.length < 3) continue;
@@ -419,7 +417,6 @@
                     values.push(val);
                 }
                 
-                // Hanya ambil kategori yang memiliki data (total > 0)
                 const total = values.reduce((a, b) => a + b, 0);
                 if (total > 0) {
                     bulanData.push({
@@ -430,7 +427,6 @@
                 }
             }
             
-            // Sort by total descending
             bulanData.sort((a, b) => b.total - a.total);
             
             return { headers, bulanData };
@@ -441,30 +437,74 @@
             
             const result = [];
             
+            // Cari index kolom berdasarkan header (baris pertama)
+            const headers = rawData[0];
+            let bulanIndex = -1;
+            let tahunIndex = -1;
+            let totalKerugianIndex = -1;
+            let kualitasIndex = DampakColumnMapping.kualitas;
+            let kepatuhanIndex = DampakColumnMapping.kepatuhan;
+            let pengawasanIndex = DampakColumnMapping.pengawasan;
+            let stakeholderIndex = DampakColumnMapping.stakeholder;
+            let sdmIndex = DampakColumnMapping.sdm;
+            let reviewManualIndex = DampakColumnMapping.review_manual;
+            let reputasiIndex = DampakColumnMapping.reputasi;
+            
+            // Cari index kolom berdasarkan header yang lebih akurat
+            if (headers && headers.length > 0) {
+                for (let i = 0; i < headers.length; i++) {
+                    const header = headers[i] ? headers[i].toString().trim() : '';
+                    if (header === 'Bulan' || header === 'bulan') bulanIndex = i;
+                    if (header === 'Tahun' || header === 'tahun') tahunIndex = i;
+                    if (header === 'Total_Kerugian_Terhindar' || header === 'Total Kerugian Terhindar') {
+                        totalKerugianIndex = i;
+                    }
+                    if (header === 'Kualitas_Layanan' || header === 'Kualitas Layanan') kualitasIndex = i;
+                    if (header === 'Kepatuhan' || header === 'Kepatuhan_Regulasi') kepatuhanIndex = i;
+                    if (header === 'Pengawasan' || header === 'Pengawasan_Penegakan') pengawasanIndex = i;
+                    if (header === 'Stakeholder' || header === 'Hubungan_Stakeholder') stakeholderIndex = i;
+                    if (header === 'SDM' || header === 'SDM_Internal') sdmIndex = i;
+                    if (header === 'Review_Manual' || header === 'Review Manual') reviewManualIndex = i;
+                    if (header === 'Reputasi' || header === 'Reputasi_Publik') reputasiIndex = i;
+                }
+            }
+            
+            // Jika tidak ditemukan header, gunakan mapping default
+            if (bulanIndex === -1) bulanIndex = DampakColumnMapping.bulan;
+            if (tahunIndex === -1) tahunIndex = DampakColumnMapping.tahun;
+            
             for (let i = 1; i < rawData.length; i++) {
                 const row = rawData[i];
                 if (!row || row.length < 3) continue;
                 
-                const bulan = row[DampakColumnMapping.bulan] ? row[DampakColumnMapping.bulan].toString().trim() : '';
-                const tahun = row[DampakColumnMapping.tahun] ? row[DampakColumnMapping.tahun].toString().trim() : '';
+                const bulan = row[bulanIndex] ? row[bulanIndex].toString().trim() : '';
+                const tahun = row[tahunIndex] ? row[tahunIndex].toString().trim() : '';
                 
                 if (bulan === '' || bulan === 'Total' || bulan === 'TOTAL') continue;
+                
+                // Ambil nilai Total_Kerugian_Terhindar dari kolom yang ditemukan
+                let totalKerugian = 0;
+                if (totalKerugianIndex !== -1 && row[totalKerugianIndex]) {
+                    // Hapus karakter non-digit (seperti Rp, spasi, titik, koma)
+                    const kerugianStr = row[totalKerugianIndex].toString().replace(/[^0-9]/g, '');
+                    totalKerugian = parseInt(kerugianStr) || 0;
+                }
                 
                 result.push({
                     id: i,
                     Bulan: bulan,
                     Tahun: tahun,
-                    Kualitas_Layanan: parseInt(row[DampakColumnMapping.kualitas]) || 0,
-                    Kepatuhan: parseInt(row[DampakColumnMapping.kepatuhan]) || 0,
-                    Pengawasan: parseInt(row[DampakColumnMapping.pengawasan]) || 0,
-                    Stakeholder: parseInt(row[DampakColumnMapping.stakeholder]) || 0,
-                    SDM: parseInt(row[DampakColumnMapping.sdm]) || 0,
-                    Review_Manual: parseInt(row[DampakColumnMapping.review_manual]) || 0,
-                    Reputasi: parseInt(row[DampakColumnMapping.reputasi]) || 0,
+                    Kualitas_Layanan: parseInt(row[kualitasIndex]) || 0,
+                    Kepatuhan: parseInt(row[kepatuhanIndex]) || 0,
+                    Pengawasan: parseInt(row[pengawasanIndex]) || 0,
+                    Stakeholder: parseInt(row[stakeholderIndex]) || 0,
+                    SDM: parseInt(row[sdmIndex]) || 0,
+                    Review_Manual: parseInt(row[reviewManualIndex]) || 0,
+                    Reputasi: parseInt(row[reputasiIndex]) || 0,
                     Kerugian_Financial: 0,
                     Kerugian_Potensi_Negara: 0,
                     Kerugian_Efisiensi: 0,
-                    Total_Kerugian_Terhindar: 0,
+                    Total_Kerugian_Terhindar: totalKerugian,
                     Detail_Kerugian: ''
                 });
             }
@@ -569,9 +609,9 @@
             ];
             
             dataDampak = [
-                { Bulan: 'Januari', Tahun: '2026', Kualitas_Layanan: 63, Kepatuhan: 14, Pengawasan: 22, Stakeholder: 0, SDM: 15, Review_Manual: 2, Reputasi: 24 },
-                { Bulan: 'Februari', Tahun: '2026', Kualitas_Layanan: 42, Kepatuhan: 15, Pengawasan: 13, Stakeholder: 1, SDM: 7, Review_Manual: 1, Reputasi: 50 },
-                { Bulan: 'Maret', Tahun: '2026', Kualitas_Layanan: 0, Kepatuhan: 0, Pengawasan: 0, Stakeholder: 0, SDM: 0, Review_Manual: 0, Reputasi: 0 }
+                { Bulan: 'Januari', Tahun: '2026', Kualitas_Layanan: 63, Kepatuhan: 14, Pengawasan: 22, Stakeholder: 0, SDM: 15, Review_Manual: 2, Reputasi: 24, Total_Kerugian_Terhindar: 125000000 },
+                { Bulan: 'Februari', Tahun: '2026', Kualitas_Layanan: 42, Kepatuhan: 15, Pengawasan: 13, Stakeholder: 1, SDM: 7, Review_Manual: 1, Reputasi: 50, Total_Kerugian_Terhindar: 87500000 },
+                { Bulan: 'Maret', Tahun: '2026', Kualitas_Layanan: 0, Kepatuhan: 0, Pengawasan: 0, Stakeholder: 0, SDM: 0, Review_Manual: 0, Reputasi: 0, Total_Kerugian_Terhindar: 0 }
             ];
             
             dataAduan = [
@@ -582,7 +622,6 @@
                 { timestamp: '2026-02-10', provinsi: 'Jawa Barat', lokasi_lengkap: 'Cilaku, Cianjur, Jawa Barat', lat: '-6.8453', lon: '107.1396', locationId: 'LOC005', keterangan: 'Peredaran rokok non cukai' }
             ];
             
-            // Demo data kategori
             kategoriHeaders = ['Januari', 'Februari', 'Maret'];
             dataKategoriLayanan = [
                 { nama: 'REGISTRASI IMEI', values: [54, 53, 47], total: 154 },
@@ -729,11 +768,9 @@
             if (!dataKategoriLayanan || dataKategoriLayanan.length === 0) return;
             
             const labels = kategoriHeaders;
-            // Generate dynamic colors for top 10 categories
             const colors = ['#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#4cc9f0', '#4895ef', '#560bad', '#b5179e', '#e76f51', '#f4a261'];
             
             const datasets = [];
-            // Tampilkan top 8 kategori untuk menghindari terlalu padat
             const topKategori = dataKategoriLayanan.slice(0, 8);
             
             topKategori.forEach((kategori, idx) => {
@@ -893,10 +930,8 @@
         }
         
         function generateInsights() {
-            // Generate insights based on channel and category data
             let insights = [];
             
-            // Channel insights
             if (channelData.length > 0 && channelConfig.length > 0) {
                 const latestChannel = channelData[channelData.length - 1];
                 const prevChannel = channelData[channelData.length - 2];
@@ -921,7 +956,6 @@
                 }
             }
             
-            // Category insights
             if (dataKategoriLayanan.length > 0) {
                 const topCategory = dataKategoriLayanan[0];
                 insights.push(`🏷️ **Topik Terbanyak**: "${topCategory.nama}" menjadi topik layanan tertinggi dengan total ${topCategory.total} pertanyaan.`);
@@ -934,14 +968,12 @@
                     insights.push(`⚠️ Aduan masyarakat cukup tinggi, perlu evaluasi responsivitas layanan dan follow-up yang lebih cepat.`);
                 }
                 
-                // Check for rising categories
                 if (dataKategoriLayanan.length >= 2) {
                     const secondCategory = dataKategoriLayanan[1];
                     insights.push(`📌 Kategori "${secondCategory.nama}" juga cukup signifikan dengan ${secondCategory.total} total layanan.`);
                 }
             }
             
-            // Trend insights
             if (trenPerubahan && trenPerubahan !== '') {
                 const trendValue = parseInt(trenPerubahan.replace(/[^0-9-]/g, '')) || 0;
                 if (trendValue > 0) {
@@ -951,7 +983,6 @@
                 }
             }
             
-            // Average time insight
             if (ytdAvgTime !== '--:--:--') {
                 insights.push(`⏱️ **Waktu Respons**: Rata-rata waktu layanan YTD ${ytdAvgTime}, target untuk ditingkatkan menjadi < 15 menit.`);
             }
@@ -975,7 +1006,10 @@
             const currentTotalLayanan = totalLayananBulanan > 0 ? totalLayananBulanan : (current ? current.Total_Layanan : '0');
             const formattedTrend = formatTrendText(trenPerubahan);
             const ytdLayanan = totalLayananYTD > 0 ? totalLayananYTD : dataLayanan.reduce((s,i) => s + (parseInt(i.Total_Layanan)||0), 0);
-            const ytdKerugian = dataDampak.reduce((s,i) => s + (parseInt(i.Total_Kerugian_Terhindar)||0), 0);
+            
+            // Hitung total kerugian terhindar YTD dari dataDampak
+            const ytdKerugian = dataDampak.reduce((s, i) => s + (parseInt(i.Total_Kerugian_Terhindar) || 0), 0);
+            
             const waktuChangeText = current ? getWaktuChangeText(current.Avg_Waktu, prev?.Avg_Waktu) : 'Data tidak tersedia';
             
             const uniqueMonthsSet = new Set();
@@ -996,7 +1030,7 @@
                 return months.indexOf(b.bulan) - months.indexOf(a.bulan);
             });
             
-            const demoNote = useDemo ? '<div class="card" style="background:#fff3cd; color:#856404; margin-bottom:15px;"><i class="fas fa-info-circle"></i> Mode Demo</div>' : '';
+            const demoNote = useDemo ? '<div class="card" style="background:#fff3cd; color:#856404; margin-bottom:15px;"><i class="fas fa-info-circle"></i> Mode Demo - Data hanya contoh</div>' : '';
             const jumlahAduanBulanIni = current ? dataAduan.filter(aduan => {
                 const parsed = parseDateFromAduan(aduan.timestamp);
                 return parsed && parsed.monthName === current.Bulan && parsed.year === current.Tahun;
@@ -1017,7 +1051,6 @@
                 </div>
             `;
             
-            // Generate category legend
             const categoryLegendHtml = dataKategoriLayanan.length > 0 ? `
                 <div class="category-legend">
                     ${dataKategoriLayanan.slice(0, 12).map((cat, idx) => {
@@ -1044,11 +1077,14 @@
                 </div>
             `;
             
+            // Format nominal kerugian dengan pemisah ribuan
+            const formattedKerugian = ytdKerugian.toLocaleString('id-ID');
+            
             const html = `
                 ${demoNote}
                 <div class="kpi-row">
                     <div class="kpi-card" style="border-left-color:#2e7d32;">
-                        <div><div class="kpi-value">${currentTotalLayanan.toLocaleString()}</div><div class="kpi-label">Total Layanan Bulanan</div><div class="kpi-small">${formattedTrend}</div></div>
+                        <div><div class="kpi-value">${typeof currentTotalLayanan === 'number' ? currentTotalLayanan.toLocaleString() : currentTotalLayanan}</div><div class="kpi-label">Total Layanan Bulanan</div><div class="kpi-small">${formattedTrend}</div></div>
                     </div>
                     <div class="kpi-card" style="border-left-color:#1976d2;">
                         <div><div class="kpi-value">${ytdAvgTime}</div><div class="kpi-label">Rata-rata Waktu Layanan YTD</div><div class="kpi-small">${waktuChangeText}</div></div>
@@ -1057,7 +1093,7 @@
                         <div><div class="kpi-value">${ytdLayanan.toLocaleString()}</div><div class="kpi-label">Total Layanan YTD</div></div>
                     </div>
                     <div class="kpi-card" style="border-left-color:#9c27b0;">
-                        <div><div class="kpi-value">Rp ${ytdKerugian.toLocaleString()}</div><div class="kpi-label">Kerugian Terhindar YTD</div></div>
+                        <div><div class="kpi-value">Rp ${formattedKerugian}</div><div class="kpi-label">Kerugian Terhindar YTD</div><div class="kpi-small">Dari sheet DAMPAK_RISIKO</div></div>
                     </div>
                 </div>
                 
@@ -1173,7 +1209,7 @@
             }
         }
         
-        // Global function untuk toggle dataset (opsional)
+        // Global function untuk toggle dataset
         window.toggleCategoryDataset = function(index) {
             if (kategoriChart && kategoriChart.data.datasets[index]) {
                 const dataset = kategoriChart.data.datasets[index];
