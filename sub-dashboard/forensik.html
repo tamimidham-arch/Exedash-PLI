@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Komunikasi Forensik - Sub Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+        .dashboard-container { max-width: 1400px; margin: 0 auto; }
+        
+        /* Header */
+        .header { background: linear-gradient(135deg, #7b1fa2, #4a0072); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .back-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .back-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .status-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 11px; }
+        .status-badge.online { background: #28a745; }
+        .status-badge.offline { background: #dc3545; }
+        
+        /* KPI Cards */
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
+        .kpi-card { background: white; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .kpi-card:hover { transform: translateY(-3px); }
+        .kpi-value { font-size: 28px; font-weight: bold; color: #7b1fa2; }
+        .kpi-trend { font-size: 12px; margin-top: 5px; }
+        .kpi-trend.up { color: #28a745; }
+        .kpi-trend.down { color: #dc3545; }
+        
+        /* Insight Box - baru */
+        .insight-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .insight-card { background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 15px; padding: 20px; border-left: 5px solid #7b1fa2; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .insight-card:hover { transform: translateY(-3px); }
+        .insight-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #7b1fa2; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .insight-title i { font-size: 18px; }
+        .insight-situation { font-size: 13px; color: #495057; background: white; padding: 12px; border-radius: 10px; margin-bottom: 12px; border-left: 3px solid #ffc107; }
+        .insight-text { font-size: 14px; color: #1e3c72; font-weight: 500; line-height: 1.5; background: white; padding: 12px; border-radius: 10px; }
+        .insight-theory { font-size: 11px; color: #6c757d; margin-top: 10px; padding-top: 8px; border-top: 1px solid #dee2e6; display: flex; align-items: center; gap: 5px; }
+        
+        /* Cards */
+        .card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #e9ecef; padding-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+        .card-header h3 { font-size: 16px; color: #1e3c72; display: flex; align-items: center; gap: 8px; }
+        .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .row-3 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        
+        /* Crisis Alert */
+        .crisis-alert-critical { background: #dc3545; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; animation: pulseCritical 1.5s infinite; }
+        .crisis-alert-substantive { background: #fd7e14; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
+        @keyframes pulseCritical { 0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.4); } 70% { box-shadow: 0 0 0 10px rgba(220,53,69,0); } 100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); } }
+        .warning-alert { background: #fff3cd; color: #856404; padding: 12px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; border-left: 4px solid #ffc107; }
+        
+        /* Score Indicator */
+        .level-critical { background: #dc3545; color: white; padding: 2px 8px; border-radius: 20px; font-size: 11px; display: inline-block; }
+        .level-substantive { background: #fd7e14; color: white; padding: 2px 8px; border-radius: 20px; font-size: 11px; display: inline-block; }
+        .level-moderate { background: #ffc107; color: #212529; padding: 2px 8px; border-radius: 20px; font-size: 11px; display: inline-block; }
+        .level-low { background: #28a745; color: white; padding: 2px 8px; border-radius: 20px; font-size: 11px; display: inline-block; }
+        .level-noise { background: #6c757d; color: white; padding: 2px 8px; border-radius: 20px; font-size: 11px; display: inline-block; }
+        
+        /* Mitigasi Card */
+        .mitigasi-card { background: #f8f9fa; border-left: 4px solid; padding: 15px; border-radius: 10px; margin-bottom: 10px; transition: transform 0.2s; }
+        .mitigasi-card:hover { transform: translateX(5px); }
+        .mitigasi-title { font-weight: bold; margin-bottom: 8px; }
+        .mitigasi-desc { font-size: 13px; color: #495057; }
+        .mitigasi-aksi { font-size: 12px; color: #007bff; margin-top: 8px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e9ecef; }
+        th { background: #f8f9fa; }
+        .loader { text-align: center; padding: 40px; color: #6c757d; }
+        .loader i { font-size: 40px; margin-bottom: 10px; display: block; }
+        
+        @media (max-width: 800px) { .kpi-row, .row-2, .row-3 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <div>
+                <h1><i class="fas fa-newspaper"></i> Komunikasi Forensik</h1>
+                <p>Analisis Framing & Sentimen | Mitigasi Risiko Berbasis Level & Trafik</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <span id="data-status" class="status-badge">Memuat...</span>
+                <button class="back-btn" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-left"></i> Kembali</button>
+            </div>
+        </div>
+        
+        <div id="dashboard-content">
+            <div class="loader"><i class="fas fa-spinner fa-pulse"></i> Memuat data forensik...</div>
+        </div>
+    </div>
+    
+    <script>
+        // ==================== KONFIGURASI ====================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbywHucFlh5aJAPbVMUWGA_REGi9lrax2IjYMbPtHJoMTIYqIriHeRFnjygQMbICNJphhg/exec';
+        
+        let dataForensik = [];
+        let useDemo = false;
+        
+        // ==================== TABEL INSIGHT DI BACKEND ====================
+        // Tabel ini berisi parameter (sentimen dominan, framing dominan, tipe media dominan)
+        // beserta situasi, insight, dan teori pendukung yang akan ditampilkan di kotak insight
+        const insightTable = [
+            {
+                id: 1,
+                kondisi: { sentimen: 'NEGATIF', framing: 'Emosional', media: 'Media Biasa' },
+                situasi: "Pemberitaan negatif didominasi framing emosional dan dipublikasikan oleh media biasa atau akun personal, bukan media arus utama.",
+                insight: "Negatif secara kuantitas belum tentu negatif secara kualitas. Framing emosional menunjukkan isu lebih bersifat sentimental daripada sistemik. Sumber dari media non-arus utama membuat sentimen ini tidak cukup valid untuk dijadikan dasar evaluasi kebijakan secara keseluruhan.",
+                teori: "Teori Framing (Entman) & Source Credibility (Hovland)"
+            },
+            {
+                id: 2,
+                kondisi: { sentimen: 'NEGATIF', framing: 'Emosional', media: 'Akun Personal' },
+                situasi: "Isu negatif ramai di akun personal dengan framing emosional, sementara media arus utama tidak memberitakan atau memberitakan dengan nada berbeda.",
+                insight: "Akun personal memiliki kredibilitas rendah dalam membentuk opini publik luas. Fenomena ini menunjukkan adanya minoritas vokal yang aktif, bukan representasi opini mayoritas. Cukup dilakukan pendekatan komunikasi empatik tanpa perubahan kebijakan fundamental.",
+                teori: "Source Credibility (Hovland) & Spiral of Silence (Noelle-Neumann)"
+            },
+            {
+                id: 3,
+                kondisi: { sentimen: 'NEGATIF', framing: 'Kebijakan', media: 'Media Arus Utama' },
+                situasi: "Pemberitaan negatif dengan framing kebijakan yang dipublikasikan oleh media arus utama nasional.",
+                insight: "Ini adalah sinyal serius! Framing kebijakan di media arus utama menunjukkan adanya kritik sistemik yang perlu dievaluasi. Dibutuhkan respons terstruktur dan perubahan prosedur jika diperlukan. Jangan biarkan isu ini berkembang tanpa penanganan.",
+                teori: "Agenda Setting (McCombs & Shaw) & Framing (Entman)"
+            },
+            {
+                id: 4,
+                kondisi: { sentimen: 'NEGATIF', framing: 'Kebijakan', media: 'Media Biasa' },
+                situasi: "Isu negatif dengan framing kebijakan namun hanya beredar di media biasa/lokal, tidak diangkat media arus utama.",
+                insight: "Meskipun framing kebijakan menunjukkan potensi kritik sistemik, sumber dari media biasa/lokal mengindikasikan persoalan bersifat geografis dan kontekstual. Penyelesaian cukup dilakukan di tingkat lokal dengan pendekatan spesifik sesuai wilayah.",
+                teori: "Agenda Setting (McCombs & Shaw)"
+            },
+            {
+                id: 5,
+                kondisi: { sentimen: 'NETRAL', framing: 'Layanan', media: 'Media Arus Utama' },
+                situasi: "Pemberitaan netral dengan framing layanan yang dipublikasikan media arus utama.",
+                insight: "Kondisi ideal: pemberitaan netral di media kredibel menunjukkan opini publik stabil. Manfaatkan momentum ini untuk memperkuat narasi positif dan edukasi publik melalui media arus utama.",
+                teori: "Public Relations & Media Relations"
+            },
+            {
+                id: 6,
+                kondisi: { sentimen: 'POSITIF', framing: 'Layanan', media: 'Media Arus Utama' },
+                situasi: "Pemberitaan positif didominasi framing layanan di media arus utama.",
+                insight: "Momentum baik untuk membangun reputasi. Perkuat komunikasi dengan media arus utama untuk mempertahankan narasi positif. Gunakan sebagai bahan publikasi dan peningkatan kepercayaan publik.",
+                teori: "Image Restoration & Reputation Management"
+            },
+            {
+                id: 7,
+                kondisi: { sentimen: 'NEGATIF', framing: 'Emosional', media: 'Media Arus Utama' },
+                situasi: "Pemberitaan negatif dengan framing emosional namun dipublikasikan media arus utama.",
+                insight: "Media arus utama mengangkat isu emosional - ini perlu diwaspadai. Meskipun framing emosional cenderung jangka pendek, kredibilitas media arus utama dapat memperkuat dampak isu. Perlu respons cepat dengan data faktual untuk menetralisir narasi emosional.",
+                teori: "Agenda Setting (McCombs & Shaw) & Framing (Entman)"
+            }
+        ];
+        
+        // Fungsi untuk menentukan insight berdasarkan data aktual
+        function getInsightFromData(sentimenDominan, framingDominan, mediaDominan) {
+            // Cari kondisi yang match (bisa partial match dengan prioritas)
+            // Prioritas: cari yang tepat sama, lalu cari yang mendekati
+            let matched = insightTable.find(item => 
+                item.kondisi.sentimen === sentimenDominan && 
+                item.kondisi.framing === framingDominan && 
+                item.kondisi.media === mediaDominan
+            );
+            
+            if (!matched) {
+                // Coba cari berdasarkan sentimen dan framing saja
+                matched = insightTable.find(item => 
+                    item.kondisi.sentimen === sentimenDominan && 
+                    item.kondisi.framing === framingDominan
+                );
+            }
+            
+            if (!matched) {
+                // Default insight jika tidak ada yang cocok
+                return {
+                    situasi: `Dominasi sentimen ${sentimenDominan}, framing ${framingDominan}, dan mayoritas dari ${mediaDominan}.`,
+                    insight: "Perlu dilakukan analisis lebih lanjut untuk memahami konteks pemberitaan. Kombinasi parameter ini menunjukkan dinamika komunikasi yang perlu dicermati.",
+                    teori: "Komunikasi Forensik & Analisis Framing"
+                };
+            }
+            
+            return matched;
+        }
+        
+        // ==================== DEFINISI MITIGASI ====================
+        const mitigasiRules = {
+            'CRITICAL': { action: 'RESPON CEPAT (≤2 jam)', description: 'Harus ditangani cepat & terstruktur. Libatkan juru bicara otoritatif.', urgency: 'darurat' },
+            'SUBSTANTIVE': { action: 'RESPON TERKENDALI (≤4 jam)', description: 'Tidak darurat tapi harus dikelola. Berikan penjelasan prosedur & konteks.', urgency: 'waspada' },
+            'MODERATE': { action: 'MONITORING & SIAPKAN NARASI', description: 'Awasi perkembangan. Siapkan jawaban template bila isu berkembang.', urgency: 'pantau' },
+            'LOW': { action: 'REAKTIF SAJA', description: 'Balas hanya jika memerlukan klarifikasi teknis. Hindari overexposure.', urgency: 'rendah' },
+            'NOISE': { action: 'ABAIKAN', description: 'Tidak perlu respons. Bisa diabaikan atau blokir jika spam.', urgency: 'abaikan' }
+        };
+        
+        function getFinalMitigasi(item) {
+            let level = item.Level || 'MODERATE';
+            let trafik = parseInt(item.Trafik) || 0;
+            let accType = item.ACC_Type || 'Media Biasa';
+            
+            if (trafik > 10000 && accType === 'Media Arus Utama' && level === 'MODERATE') {
+                level = 'SUBSTANTIVE';
+            }
+            if (trafik < 100 && accType === 'Media Biasa' && (level === 'SUBSTANTIVE' || level === 'MODERATE')) {
+                level = 'LOW';
+            }
+            if (accType === 'Akun Personal' && trafik < 500 && level !== 'CRITICAL') {
+                level = 'NOISE';
+            }
+            
+            return { ...mitigasiRules[level], level, originalLevel: item.Level };
+        }
+        
+        // ==================== FETCH DATA ====================
+        async function fetchSheetData() {
+            try {
+                const response = await fetch(`${API_URL}?sheet=FORENSIK`);
+                const data = await response.json();
+                if (data.status === 'success' && data.data && data.data.length > 1) {
+                    const headers = data.data[0];
+                    const rows = data.data.slice(1).filter(row => row[0]);
+                    dataForensik = rows.map(row => {
+                        const obj = {};
+                        headers.forEach((h, i) => { if (h) obj[h] = row[i] || ''; });
+                        return obj;
+                    });
+                    document.getElementById('data-status').innerHTML = '<i class="fas fa-check-circle"></i> Online';
+                    document.getElementById('data-status').className = 'status-badge online';
+                    useDemo = false;
+                } else { loadDemoData(); }
+                renderDashboard();
+            } catch (error) {
+                console.error(error);
+                loadDemoData();
+                document.getElementById('data-status').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline - Demo';
+                document.getElementById('data-status').className = 'status-badge offline';
+                renderDashboard();
+            }
+        }
+        
+        function loadDemoData() {
+            dataForensik = [
+                { ID: '1', Tanggal: '2026-01-22', Bulan: 'Januari', Tahun: '2026', Platform: 'Portal Berita', Hook: 'Bea Cukai Bogor lampaui target penerimaan negara', Media: 'Metropolitan', ACC_Type: 'Media Biasa', Trafik: '14', Keyword: 'Target penerimaan negara', Framing: 'Layanan', Sentiment: 'POSITIF', Opinion_Score: '2', Level: 'LOW', Mitigasi: 'Konten rutin', Status: 'Selesai' },
+                { ID: '2', Tanggal: '2026-02-05', Bulan: 'Februari', Tahun: '2026', Platform: 'Portal Berita', Hook: 'Forum Mahasiswa desak transparansi kasus PT Golden Agin Nusa', Media: 'kompas.com', ACC_Type: 'Media Arus Utama', Trafik: '0', Keyword: 'kepabeanan', Framing: 'Emosional', Sentiment: 'NEGATIF', Opinion_Score: '4', Level: 'SUBSTANTIVE', Mitigasi: 'Respon ≤ 4 jam via kanal resmi', Status: 'Proses' },
+                { ID: '3', Tanggal: '2026-02-05', Bulan: 'Februari', Tahun: '2026', Platform: 'TikTok', Hook: 'Kasus kepabeanan mandek 8 bulan', Media: 'Tribun Bogor', ACC_Type: 'Media Arus Utama', Trafik: '16400', Keyword: 'kepabeanan', Framing: 'Emosional', Sentiment: 'NEGATIF', Opinion_Score: '4', Level: 'SUBSTANTIVE', Mitigasi: 'Respon ≤ 4 jam via kanal resmi', Status: 'Proses' },
+                { ID: '4', Tanggal: '2026-02-10', Bulan: 'Februari', Tahun: '2026', Platform: 'Portal Berita', Hook: 'Rokok ilegal masih beredar di pasar tradisional', Media: 'Media Lokal', ACC_Type: 'Media Biasa', Trafik: '45', Keyword: 'Rokok ilegal', Framing: 'Kebijakan', Sentiment: 'NETRAL', Opinion_Score: '2', Level: 'LOW', Mitigasi: 'Monitoring', Status: 'Selesai' },
+                { ID: '5', Tanggal: '2026-02-15', Bulan: 'Februari', Tahun: '2026', Platform: 'Portal Berita', Hook: 'Kebijakan baru kepabeanan mulai diterapkan', Media: 'Media Lokal', ACC_Type: 'Media Biasa', Trafik: '120', Keyword: 'Kebijakan', Framing: 'Kebijakan', Sentiment: 'NETRAL', Opinion_Score: '1', Level: 'LOW', Mitigasi: 'Monitoring', Status: 'Selesai' }
+            ];
+            useDemo = true;
+        }
+        
+        // ==================== RENDER DASHBOARD ====================
+        function renderDashboard() {
+            if (dataForensik.length === 0) {
+                document.getElementById('dashboard-content').innerHTML = '<div class="loader"><i class="fas fa-database"></i> Belum ada data forensik.</div>';
+                return;
+            }
+            
+            const itemsWithMitigasi = dataForensik.map(item => ({ ...item, mitigasi: getFinalMitigasi(item) }));
+            
+            const totalBerita = dataForensik.length;
+            const sentimenNegatif = dataForensik.filter(d => d.Sentiment === 'NEGATIF').length;
+            const sentimenNetral = dataForensik.filter(d => d.Sentiment === 'NETRAL').length;
+            const sentimenPositif = dataForensik.filter(d => d.Sentiment === 'POSITIF').length;
+            
+            const framingEmosional = dataForensik.filter(d => d.Framing === 'Emosional').length;
+            const framingKebijakan = dataForensik.filter(d => d.Framing === 'Kebijakan').length;
+            const framingLayanan = dataForensik.filter(d => d.Framing === 'Layanan').length;
+            
+            const mediaArusUtama = dataForensik.filter(d => d.ACC_Type === 'Media Arus Utama').length;
+            const mediaBiasa = dataForensik.filter(d => d.ACC_Type === 'Media Biasa').length;
+            const akunPersonal = dataForensik.filter(d => d.ACC_Type === 'Akun Personal').length;
+            
+            // Hitung dominan
+            let framingDominan = 'Kebijakan', framingJumlah = framingKebijakan;
+            if (framingEmosional > framingJumlah) { framingDominan = 'Emosional'; framingJumlah = framingEmosional; }
+            if (framingLayanan > framingJumlah) { framingDominan = 'Layanan'; framingJumlah = framingLayanan; }
+            
+            let sentimenDominan = 'NETRAL', sentimenJumlah = sentimenNetral;
+            if (sentimenNegatif > sentimenJumlah) { sentimenDominan = 'NEGATIF'; sentimenJumlah = sentimenNegatif; }
+            if (sentimenPositif > sentimenJumlah) { sentimenDominan = 'POSITIF'; sentimenJumlah = sentimenPositif; }
+            
+            let mediaDominan = 'Media Biasa';
+            if (mediaArusUtama >= mediaBiasa && mediaArusUtama >= akunPersonal) mediaDominan = 'Media Arus Utama';
+            if (akunPersonal >= mediaArusUtama && akunPersonal >= mediaBiasa) mediaDominan = 'Akun Personal';
+            
+            // Ambil insight dari tabel backend berdasarkan data aktual
+            const insightData = getInsightFromData(sentimenDominan, framingDominan, mediaDominan);
+            
+            const krisisCritical = itemsWithMitigasi.filter(i => i.mitigasi.level === 'CRITICAL' && i.Status !== 'Selesai').length;
+            const krisisSubstantive = itemsWithMitigasi.filter(i => i.mitigasi.level === 'SUBSTANTIVE' && i.Status !== 'Selesai').length;
+            const perluDipantau = itemsWithMitigasi.filter(i => i.mitigasi.level === 'MODERATE' && i.Status !== 'Selesai').length;
+            const diabaikan = itemsWithMitigasi.filter(i => i.mitigasi.level === 'NOISE' || i.mitigasi.level === 'LOW').length;
+            
+            // Tren per bulan
+            const bulanList = [...new Set(dataForensik.map(d => d.Bulan))];
+            const sentimenPerBulan = bulanList.map(bulan => {
+                const dataBulan = dataForensik.filter(d => d.Bulan === bulan);
+                return { bulan, negatif: dataBulan.filter(d => d.Sentiment === 'NEGATIF').length, netral: dataBulan.filter(d => d.Sentiment === 'NETRAL').length, positif: dataBulan.filter(d => d.Sentiment === 'POSITIF').length };
+            });
+            
+            const negatifChange = sentimenPerBulan.length > 1 ? sentimenPerBulan[sentimenPerBulan.length-1].negatif - sentimenPerBulan[sentimenPerBulan.length-2].negatif : 0;
+            
+            const demoNote = useDemo ? '<div class="warning-alert"><i class="fas fa-info-circle"></i> Mode Demo: Menampilkan data contoh. Input data real di sheet FORENSIK.</div>' : '';
+            
+            let crisisHtml = '';
+            if (krisisCritical > 0) {
+                crisisHtml = `<div class="crisis-alert-critical"><div><i class="fas fa-exclamation-triangle"></i> <strong>KRISIS LEVEL CRITICAL!</strong><br>${krisisCritical} isu membutuhkan respons ≤2 jam</div><button class="back-btn" style="background:white; color:#dc3545;" onclick="alert('Tim mitigasi telah diaktifkan')"><i class="fas fa-paper-plane"></i> Aktifkan Tim Mitigasi</button></div>`;
+            } else if (krisisSubstantive > 0) {
+                crisisHtml = `<div class="crisis-alert-substantive"><div><i class="fas fa-exclamation-triangle"></i> <strong>PERINGATAN LEVEL SUBSTANTIVE</strong><br>${krisisSubstantive} isu perlu dikelola (respons ≤4 jam)</div><button class="back-btn" style="background:white; color:#fd7e14;" onclick="alert('Daftar isu telah dikirim ke tim humas')"><i class="fas fa-paper-plane"></i> Kirim ke Tim Humas</button></div>`;
+            }
+            
+            const html = `
+                ${demoNote}
+                ${crisisHtml}
+                
+                <div class="kpi-row">
+                    <div class="kpi-card"><div class="kpi-value">${totalBerita}</div><div>Total Berita</div></div>
+                    <div class="kpi-card"><div class="kpi-value">${sentimenNegatif}</div><div>Sentimen Negatif</div><div class="kpi-trend ${negatifChange > 0 ? 'down' : 'up'}">${negatifChange > 0 ? '▼ +' + negatifChange : (negatifChange < 0 ? '▲ ' + Math.abs(negatifChange) : '→ Stabil')}</div></div>
+                    <div class="kpi-card"><div class="kpi-value">${framingDominan}</div><div>Framing Dominan</div><small>${framingJumlah} berita</small></div>
+                    <div class="kpi-card"><div class="kpi-value">${krisisCritical + krisisSubstantive}</div><div>Krisis Aktif</div><small>Perlu penanganan</small></div>
+                </div>
+                
+                <!-- KOTAK INSIGHT di bawah KPI CARDS - Berdasarkan Tabel Insight Backend -->
+                <div class="insight-container">
+                    <div class="insight-card">
+                        <div class="insight-title">
+                            <i class="fas fa-lightbulb"></i> Insight Forensik Komunikasi
+                        </div>
+                        <div class="insight-situation">
+                            <i class="fas fa-chart-line"></i> <strong>Situasi Teridentifikasi:</strong><br>
+                            ${insightData.situasi}
+                        </div>
+                        <div class="insight-text">
+                            <i class="fas fa-comment-dots"></i> <strong>Analisis:</strong><br>
+                            ${insightData.insight}
+                        </div>
+                        <div class="insight-theory">
+                            <i class="fas fa-book"></i> <strong>Landasan Teori:</strong> ${insightData.teori}
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <div class="insight-title">
+                            <i class="fas fa-chart-pie"></i> Parameter Analisis
+                        </div>
+                        <div class="insight-situation">
+                            <i class="fas fa-chart-simple"></i> <strong>Dominasi Sentimen:</strong> ${sentimenDominan} (${sentimenJumlah} berita)<br>
+                            <strong>Dominasi Framing:</strong> ${framingDominan} (${framingJumlah} berita)<br>
+                            <strong>Dominasi Tipe Media:</strong> ${mediaDominan}
+                        </div>
+                        <div class="insight-text">
+                            <i class="fas fa-graduation-cap"></i> <strong>Rekomendasi :</strong><br>
+                            ${sentimenDominan === 'NEGATIF' && framingDominan === 'Emosional' && mediaDominan !== 'Media Arus Utama' ? 
+                                'Diharapkan tidak serta-merta merespons secara reaktif. Kondisi ini mencerminkan dinamika komunikasi di tingkat lokal/emosional, bukan kegagalan sistemik. Penting untuk memahami bahwa sentimen negatif belum tentu mencerminkan opini publik secara keseluruhan.' : 
+                                (sentimenDominan === 'NEGATIF' && framingDominan === 'Kebijakan' && mediaDominan === 'Media Arus Utama' ?
+                                'PERHATIAN! Kondisi ini memerlukan evaluasi kebijakan serius. Perlu segera melakukan kajian mendalam dan menyiapkan respons terstruktur.' :
+                                'Komunikasi forensik membantu untuk membaca dinamika pemberitaan secara lebih akurat, membedakan antara isu sistemik dengan isu sentimental.')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row-2">
+                    <div class="card"><div class="card-header"><h3><i class="fas fa-chart-pie"></i> Sentimen Pemberitaan</h3></div><canvas id="sentiment-chart" height="200"></canvas></div>
+                    <div class="card"><div class="card-header"><h3><i class="fas fa-chart-bar"></i> Framing Pemberitaan</h3></div><canvas id="framing-chart" height="200"></canvas></div>
+                </div>
+                
+                <div class="row-3">
+                    <div class="card"><div class="card-header"><h3><i class="fas fa-chart-pie"></i> Tipe Media</h3></div><canvas id="media-chart" height="200"></canvas></div>
+                    <div class="card"><div class="card-header"><h3><i class="fas fa-chart-line"></i> Tren Sentimen per Bulan</h3></div><canvas id="trend-chart" height="200"></canvas></div>
+                </div>
+                
+                <!-- Matriks Keputusan Mitigasi -->
+                <div class="card">
+                    <div class="card-header"><h3><i class="fas fa-shield-alt"></i> Matriks Mitigasi Risiko</h3><span class="badge">Berdasarkan Level + Trafik + Tipe Media</span></div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div class="mitigasi-card" style="border-left-color: #dc3545;"><div class="mitigasi-title"><span class="level-critical">CRITICAL</span> - Respon Cepat</div><div class="mitigasi-desc">Respons ≤2 jam. Libatkan juru bicara otoritatif. Siapkan data faktual & narasi korektif.</div><div class="mitigasi-aksi"><i class="fas fa-chart-line"></i> ${krisisCritical} isu aktif</div></div>
+                        <div class="mitigasi-card" style="border-left-color: #fd7e14;"><div class="mitigasi-title"><span class="level-substantive">SUBSTANTIVE</span> - Respons Terkendali</div><div class="mitigasi-desc">Respons ≤4 jam. Berikan penjelasan prosedur & konteks. Tawarkan solution path.</div><div class="mitigasi-aksi"><i class="fas fa-chart-line"></i> ${krisisSubstantive} isu aktif</div></div>
+                        <div class="mitigasi-card" style="border-left-color: #ffc107;"><div class="mitigasi-title"><span class="level-moderate">MODERATE</span> - Monitoring</div><div class="mitigasi-desc">Awasi & siapkan narasi. Siapkan jawaban template bila isu berkembang.</div><div class="mitigasi-aksi"><i class="fas fa-eye"></i> ${perluDipantau} isu dipantau</div></div>
+                        <div class="mitigasi-card" style="border-left-color: #6c757d;"><div class="mitigasi-title"><span class="level-noise">NOISE / LOW</span> - Abaikan</div><div class="mitigasi-desc">Tidak perlu respons. Bisa diabaikan atau blokir jika spam.</div><div class="mitigasi-aksi"><i class="fas fa-ban"></i> ${diabaikan} isu diabaikan</div></div>
+                    </div>
+                </div>
+                
+                <!-- Daftar Isu Prioritas -->
+                <div class="card">
+                    <div class="card-header"><h3><i class="fas fa-bell"></i> Prioritas Penanganan (Berdasarkan Level Mitigasi)</h3></div>
+                    <table id="prioritas-table">
+                        <thead><tr><th>Tanggal</th><th>Hook / Isu</th><th>Media</th><th>Trafik</th><th>Framing</th><th>Sentimen</th><th>Level Mitigasi</th><th>Rekomendasi Aksi</th><th>Aksi</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                
+                <!-- Daftar Semua Berita -->
+                <div class="card">
+                    <div class="card-header"><h3><i class="fas fa-list"></i> Seluruh Pemberitaan (${totalBerita} berita)</h3></div>
+                    <table id="berita-table">
+                        <thead><tr><th>Tanggal</th><th>Platform</th><th>Hook</th><th>Media</th><th>Framing</th><th>Sentimen</th><th>Level</th><th>Mitigasi Rekomendasi</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById('dashboard-content').innerHTML = html;
+            
+            // Charts
+            new Chart(document.getElementById('sentiment-chart'), { type: 'pie', data: { labels: ['NEGATIF', 'NETRAL', 'POSITIF'], datasets: [{ data: [sentimenNegatif, sentimenNetral, sentimenPositif], backgroundColor: ['#dc3545', '#6c757d', '#28a745'] }] } });
+            new Chart(document.getElementById('framing-chart'), { type: 'bar', data: { labels: ['Emosional', 'Kebijakan', 'Layanan'], datasets: [{ label: 'Jumlah Berita', data: [framingEmosional, framingKebijakan, framingLayanan], backgroundColor: ['#dc3545', '#007bff', '#28a745'] }] } });
+            new Chart(document.getElementById('media-chart'), { type: 'doughnut', data: { labels: ['Media Arus Utama', 'Media Biasa', 'Akun Personal'], datasets: [{ data: [mediaArusUtama, mediaBiasa, akunPersonal], backgroundColor: ['#dc3545', '#17a2b8', '#6c757d'] }] } });
+            
+            const trendLabels = sentimenPerBulan.map(s => s.bulan);
+            new Chart(document.getElementById('trend-chart'), { type: 'line', data: { labels: trendLabels, datasets: [
+                { label: 'Negatif', data: sentimenPerBulan.map(s => s.negatif), borderColor: '#dc3545', tension: 0.3 },
+                { label: 'Netral', data: sentimenPerBulan.map(s => s.netral), borderColor: '#6c757d', tension: 0.3 },
+                { label: 'Positif', data: sentimenPerBulan.map(s => s.positif), borderColor: '#28a745', tension: 0.3 }
+            ] } });
+            
+            // Prioritas Table
+            const prioritasItems = itemsWithMitigasi
+                .filter(i => i.mitigasi.level !== 'NOISE' && i.mitigasi.level !== 'LOW')
+                .sort((a,b) => {
+                    const order = { 'CRITICAL': 1, 'SUBSTANTIVE': 2, 'MODERATE': 3 };
+                    return (order[a.mitigasi.level] || 4) - (order[b.mitigasi.level] || 4);
+                });
+            
+            let prioritasHtml = '';
+            prioritasItems.forEach(item => {
+                const levelClass = `level-${item.mitigasi.level.toLowerCase()}`;
+                const trafik = parseInt(item.Trafik) || 0;
+                prioritasHtml += `<tr>
+                    <td>${item.Tanggal || '-'}</td>
+                    <td><strong>${(item.Hook || '').substring(0, 60)}${(item.Hook || '').length > 60 ? '...' : ''}</strong></td>
+                    <td>${item.Media || '-'}</td>
+                    <td>${trafik > 0 ? trafik.toLocaleString() : '-'}</td>
+                    <td><span class="${item.Framing === 'Emosional' ? 'level-critical' : ''}">${item.Framing || '-'}</span></td>
+                    <td><span class="${item.Sentiment === 'NEGATIF' ? 'level-critical' : ''}">${item.Sentiment || '-'}</span></td>
+                    <td><span class="${levelClass}">${item.mitigasi.level}</span></td>
+                    <td style="font-size:12px;">${item.mitigasi.action}<br><small>${item.mitigasi.description.substring(0, 50)}...</small></td>
+                    <td><button class="back-btn" style="background:#007bff; color:white; padding:5px 10px;" onclick="alert('Tugas mitigasi untuk isu ini telah dibuat. PIC: Subbag Humas')"><i class="fas fa-check"></i> Ambil Tugas</button></td>
+                </tr>`;
+            });
+            document.querySelector('#prioritas-table tbody').innerHTML = prioritasHtml || '<tr><td colspan="9">Tidak ada isu yang perlu ditangani</td></tr>';
+            
+            // Semua Berita Table
+            let beritaHtml = '';
+            [...dataForensik].sort((a,b) => new Date(b.Tanggal) - new Date(a.Tanggal)).forEach(b => {
+                const mitigasi = getFinalMitigasi(b);
+                const levelClass = `level-${mitigasi.level.toLowerCase()}`;
+                beritaHtml += `<tr>
+                    <td>${b.Tanggal || '-'}</td>
+                    <td><i class="fas ${b.Platform === 'Portal Berita' ? 'fa-newspaper' : (b.Platform === 'TikTok' ? 'fa-video' : 'fa-share-alt')}"></i> ${b.Platform || '-'}</td>
+                    <td>${(b.Hook || '').substring(0, 50)}${(b.Hook || '').length > 50 ? '...' : ''}</td>
+                    <td>${b.Media || '-'}</td>
+                    <td>${b.Framing || '-'}</td>
+                    <td><span class="${b.Sentiment === 'NEGATIF' ? 'level-critical' : ''}">${b.Sentiment || '-'}</span></td>
+                    <td><span class="${levelClass}">${mitigasi.level}</span></td>
+                    <td style="font-size:11px;">${mitigasi.action}</td>
+                </tr>`;
+            });
+            document.querySelector('#berita-table tbody').innerHTML = beritaHtml;
+        }
+        
+        fetchSheetData();
+    </script>
+</body>
+</html>
