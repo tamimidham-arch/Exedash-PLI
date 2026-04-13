@@ -70,16 +70,64 @@
         .modal-content { background: white; max-width: 95%; margin: 20px auto; border-radius: 28px; padding: 20px; position: relative; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
         .close-modal { background: #ef4444; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; }
-        .scheduler-table-container { overflow-x: auto; max-height: 70vh; }
-        .scheduler-table { border-collapse: collapse; font-size: 0.7rem; min-width: 800px; }
-        .scheduler-table th, .scheduler-table td { border: 1px solid #ddd; padding: 6px 8px; text-align: center; vertical-align: middle; }
-        .scheduler-table th { background: #f1f5f9; position: sticky; top: 0; }
+        .scheduler-table-container { overflow-x: auto; max-height: 70vh; position: relative; }
+        .scheduler-table {
+            border-collapse: collapse;
+            font-size: 0.7rem;
+            min-width: 800px;
+        }
+        .scheduler-table th,
+        .scheduler-table td {
+            border: 1px solid #ddd;
+            padding: 8px 6px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .scheduler-table th {
+            background: #f1f5f9;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        /* HANYA kolom Nama Pegawai yang sticky (tidak ikut scroll horizontal) */
+        .scheduler-table th:first-child,
+        .scheduler-table td:first-child {
+            position: sticky;
+            left: 0;
+            background-color: #f8fafc;
+            z-index: 5;
+            font-weight: 700;
+            text-align: left;
+            min-width: 110px;
+        }
+        .scheduler-table th:first-child {
+            z-index: 15;
+            background-color: #e2e8f0;
+        }
+        .scheduler-table td:first-child {
+            background-color: #fefce8;
+            font-weight: 700;
+        }
         .scheduler-table td { cursor: pointer; background: #fefefe; transition: 0.1s; }
         .scheduler-table td:hover { background: #fff3e0; }
         .scheduler-table td.holiday-cell { background: #e2e3e5; cursor: not-allowed; color: #6c757d; }
         .scheduler-table td.holiday-cell:hover { background: #e2e3e5; }
+        
+        /* Style untuk kolom rekap seperti contoh PDF */
+        .scheduler-table th.rekap-col,
+        .scheduler-table td.rekap-col {
+            background-color: #f0fdf4;
+            min-width: 50px;
+            font-weight: 600;
+        }
+        .scheduler-table th.rekap-col {
+            background-color: #dcfce7;
+        }
+        .flag-belum-ideal { background-color: #fef08a !important; color: #854d0e; font-weight: bold; }
+        
         .btn-save-batch { background: #10b981; margin-top: 16px; padding: 10px 24px; }
         .btn-random { background: #f97316; margin-right: 10px; padding: 10px 24px; }
+        .btn-copy-excel { background: #3b82f6; margin-left: 10px; padding: 10px 20px; border-radius: 40px; border: none; color: white; font-weight: bold; cursor: pointer; }
         .month-picker { display: flex; gap: 12px; align-items: center; }
         .picker-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: center; }
         .picker-card { background: white; border-radius: 28px; padding: 24px; width: 280px; text-align: center; }
@@ -92,6 +140,7 @@
         .attendance-low { background: #fee2e2; color: #dc2626; font-weight: bold; }
         .weekend-header { color: #dc2626; }
         .holiday-header { background: #fee2e2; color: #b91c1c; }
+        
         .export-table-container { overflow-x: auto; max-height: 500px; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; background: #faf9f6; }
         .export-table { width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif; font-size: 13px; }
         .export-table th, .export-table td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; vertical-align: top; }
@@ -113,7 +162,6 @@
             <button id="openSchedulerBtn" class="scheduler-btn"><i class="fas fa-calendar-alt"></i> Scheduler Bulanan</button>
             <button id="openEmployeeBtn" class="employee-btn"><i class="fas fa-users"></i> Kelola Pegawai</button>
             <button id="exportFortnightBtn" class="export-btn"><i class="fas fa-file-export"></i> 📋 Export Jadwal 2 Minggu</button>
-            <!-- Tombol kembali ke Index.html -->
             <button id="backToIndexBtn" style="background:#6c757d; border:none; padding:8px 16px; border-radius:40px; color:white; font-weight:bold; cursor:pointer;"><i class="fas fa-arrow-left"></i> Kembali ke Dashboard</button>
         </div>
     </div>
@@ -155,6 +203,7 @@
                 </div>
                 <div>
                     <button id="randomizeBtn" class="btn-random"><i class="fas fa-dice"></i> Acak Jadwal</button>
+                    <button id="copyTableToExcelBtn" class="btn-copy-excel"><i class="fas fa-copy"></i> Copy ke Excel</button>
                     <button class="close-modal" id="closeModalBtn">&times;</button>
                 </div>
             </div>
@@ -166,6 +215,9 @@
             </div>
             <div id="attendanceRow" class="attendance-row"></div>
             <button id="saveBatchBtn" class="btn-save-batch"><i class="fas fa-save"></i> Simpan Semua Perubahan</button>
+            <div style="margin-top:12px; font-size:0.65rem; color:#475569; text-align:center;">
+                <i class="fas fa-info-circle"></i> Kolom rekap: WFO, MPP, ST, MSOS, ADM, FDSK, TOTAL | <span style="background:#fef08a;">🟡 Kuning</span> = di bawah ideal
+            </div>
         </div>
     </div>
 
@@ -368,12 +420,38 @@
         renderScheduler();
     }
     
-    // ======================= RENDER SCHEDULER =======================
+    // ======================= RENDER SCHEDULER dengan REKAP (WFO, MPP, ST, MSOS, ADM, FDSK, TOTAL) =======================
     function renderScheduler() {
         const year = currentBatchDate.getFullYear();
         const month = currentBatchDate.getMonth();
         const daysInMonth = new Date(year, month+1, 0).getDate();
         
+        // Hitung target ideal per posisi (berdasarkan komposisi harian)
+        let totalFDSKNeeded = 0, totalMSOSNeeded = 0, totalADMNeeded = 0, totalMPPNeeded = 0;
+        let totalWorkDays = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            if (!isHolidayOrWeekend(dateStr, year, month, d)) {
+                totalWorkDays++;
+                const dayOfWeek = new Date(year, month, d).getDay();
+                totalFDSKNeeded += 2;
+                totalADMNeeded += 1;
+                if (dayOfWeek === 5) {
+                    totalMSOSNeeded += 2;
+                    totalMPPNeeded += 1;
+                } else {
+                    totalMSOSNeeded += 3;
+                }
+            }
+        }
+        const regularCount = employees.filter(e => e.callSign !== "PLI" && e.callSign !== "PBC").length;
+        const idealFDSK = Math.ceil(totalFDSKNeeded / regularCount);
+        const idealMSOS = Math.ceil(totalMSOSNeeded / regularCount);
+        const idealADM = Math.ceil(totalADMNeeded / regularCount);
+        const idealMPP = totalMPPNeeded > 0 ? Math.ceil(totalMPPNeeded / regularCount) : 0;
+        const idealHariKerja = Math.ceil(totalWorkDays / regularCount);
+        
+        // Buat header tabel + kolom rekap (seperti contoh PDF: WFO, MPP, ST, MSOS, ADM, FDSK, TOTAL)
         let theadHtml = "<tr><th>Nama / Tgl</th>";
         for (let d = 1; d <= daysInMonth; d++) {
             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -384,6 +462,8 @@
             else if (isWeekendDay) cls = 'class="weekend-header"';
             theadHtml += `<th ${cls}>${d}</th>`;
         }
+        // Kolom rekap sesuai contoh PDF
+        theadHtml += `<th class="rekap-col">WFO</th><th class="rekap-col">MPP</th><th class="rekap-col">ST</th><th class="rekap-col">MSOS</th><th class="rekap-col">ADM</th><th class="rekap-col">FDSK</th><th class="rekap-col">TOTAL</th>`;
         theadHtml += "</tr>";
         document.getElementById("schedulerHead").innerHTML = theadHtml;
         
@@ -406,8 +486,13 @@
         });
         
         let tbodyHtml = "";
-        employees.forEach(emp => {
-            tbodyHtml += `<tr><td style="font-weight:bold; background:#f8fafc;">${emp.callSign}<br><small>${emp.role}</small></td>`;
+        for (let emp of employees) {
+            // Hitung rekap untuk pegawai ini
+            let wfoCount = 0, mppCount = 0, stCount = 0, msosCount = 0, admCount = 0, fdskCount = 0;
+            let totalBertugas = 0;
+            
+            // Baris utama jadwal
+            let rowHtml = `<tr><td class="sticky-col"><strong>${emp.callSign}</strong><br><small>${emp.name}</small></td>`;
             for (let d = 1; d <= daysInMonth; d++) {
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const key = `${emp.callSign}|${dateStr}`;
@@ -417,15 +502,45 @@
                 const displayStatus = isLibur ? "Libur" : (data.status || "");
                 const statusIcon = displayStatus === "WFO" ? "🟢" : (displayStatus === "WFH" ? "🟡" : (displayStatus === "Cuti" ? "🔴" : (displayStatus === "ST" ? "🔵" : (displayStatus === "Libur" ? "⚪" : ""))));
                 const holidayClass = isLibur ? 'holiday-cell' : '';
-                tbodyHtml += `<td class="schedule-cell ${holidayClass}" data-person="${emp.callSign}" data-date="${dateStr}" data-holiday="${isLibur}">
+                
+                // Update rekap (hanya untuk hari kerja non-libur yang memiliki tugas)
+                if (!isHolidayOrWeekend(dateStr, year, month, d) && data.status !== "Libur" && data.task) {
+                    totalBertugas++;
+                    if (data.status === "WFO") wfoCount++;
+                    else if (data.status === "ST") stCount++;
+                    
+                    if (data.task === "FDSK") fdskCount++;
+                    else if (data.task === "MSOS") msosCount++;
+                    else if (data.task === "ADM") admCount++;
+                    else if (data.task === "MPP") mppCount++;
+                }
+                
+                rowHtml += `<td class="schedule-cell ${holidayClass}" data-person="${emp.callSign}" data-date="${dateStr}" data-holiday="${isLibur}">
                                 <strong>${displayTask}</strong><br><small>${displayStatus} ${statusIcon}</small>
-                                </td>`;
+                            </td>`;
             }
-            tbodyHtml += "</tr>";
-        });
+            
+            // Tentukan flag jika di bawah ideal
+            const flagFDSK = fdskCount < idealFDSK ? 'flag-belum-ideal' : '';
+            const flagMSOS = msosCount < idealMSOS ? 'flag-belum-ideal' : '';
+            const flagADM = admCount < idealADM ? 'flag-belum-ideal' : '';
+            const flagMPP = (idealMPP > 0 && mppCount < idealMPP) ? 'flag-belum-ideal' : '';
+            const flagTotal = totalBertugas < idealHariKerja ? 'flag-belum-ideal' : '';
+            
+            // Tambahkan kolom rekap sesuai contoh PDF: WFO, MPP, ST, MSOS, ADM, FDSK, TOTAL
+            rowHtml += `<td class="rekap-col">${wfoCount}</td>
+                        <td class="rekap-col ${flagMPP}">${mppCount}${idealMPP > 0 && mppCount < idealMPP ? ' ⚠️' : ''}</td>
+                        <td class="rekap-col">${stCount}</td>
+                        <td class="rekap-col ${flagMSOS}">${msosCount}${msosCount < idealMSOS ? ' ⚠️' : ''}</td>
+                        <td class="rekap-col ${flagADM}">${admCount}${admCount < idealADM ? ' ⚠️' : ''}</td>
+                        <td class="rekap-col ${flagFDSK}">${fdskCount}${fdskCount < idealFDSK ? ' ⚠️' : ''}</td>
+                        <td class="rekap-col ${flagTotal}">${totalBertugas}${totalBertugas < idealHariKerja ? ' ⚠️' : ''}</td>
+                        </tr>`;
+            tbodyHtml += rowHtml;
+        }
         document.getElementById("schedulerBody").innerHTML = tbodyHtml;
         
-        // Attendance
+        // Attendance row (tetap)
         const attendanceData = [];
         for (let d = 1; d <= daysInMonth; d++) {
             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -447,7 +562,7 @@
             attendanceData.push({ date: d, percent, total: totalFilled, wfo: totalWFO, isHoliday: false });
         }
         
-        let attendanceHtml = `<table> <thead> 汽<th>Tanggal</th>`;
+        let attendanceHtml = `</table> <thead> 汽<th>Tanggal</th>`;
         for (let d = 1; d <= daysInMonth; d++) attendanceHtml += `<th>${d}</th>`;
         attendanceHtml += `</thead> <tbody> <tr><th>Kehadiran WFO</th>`;
         for (let i = 0; i < attendanceData.length; i++) {
@@ -462,6 +577,7 @@
         attendanceHtml += `</tr> </tbody> </table>`;
         document.getElementById("attendanceRow").innerHTML = attendanceHtml;
         
+        // Event listener klik cell
         document.querySelectorAll("#schedulerBody td.schedule-cell").forEach(cell => {
             const isLibur = cell.dataset.holiday === "true";
             if (isLibur) {
@@ -493,6 +609,61 @@
         });
         
         document.getElementById("currentMonthYear").innerText = `${currentBatchDate.toLocaleString('id-ID', { month: 'long' })} ${year}`;
+    }
+    
+    // ======================= COPY KE EXCEL =======================
+    function copyTableToExcel() {
+        const table = document.getElementById("schedulerTable");
+        if (!table) return;
+        
+        // Clone tabel untuk menghindari gangguan style
+        const cloneTable = table.cloneNode(true);
+        
+        // Hapus elemen yang tidak perlu (tooltip, dll)
+        cloneTable.querySelectorAll('.schedule-cell').forEach(cell => {
+            // Bersihkan inner HTML menjadi teks biasa
+            const strong = cell.querySelector('strong');
+            const small = cell.querySelector('small');
+            let taskText = strong ? strong.innerText : '';
+            let statusText = small ? small.innerText : '';
+            cell.innerText = `${taskText} ${statusText}`.trim();
+        });
+        
+        // Buat HTML untuk Excel
+        const htmlContent = `
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Jadwal Bulanan ${currentBatchDate.toLocaleString('id-ID', { month: 'long' })} ${currentBatchDate.getFullYear()}</title>
+                <style>
+                    th, td { border: 1px solid #000; padding: 4px 6px; text-align: center; vertical-align: middle; }
+                    th { background: #f1f5f9; font-weight: bold; }
+                </style>
+            </head>
+            <body>
+                ${cloneTable.outerHTML}
+                <p><em>Generated from Sub Dashboard Tim Operasional</em></p>
+            </body>
+            </html>
+        `;
+        
+        // Copy ke clipboard sebagai HTML
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const data = [new ClipboardItem({ [blob.type]: blob })];
+        
+        navigator.clipboard.write(data).then(() => {
+            alert("✅ Tabel berhasil disalin!\n\nPaste langsung ke Microsoft Excel (Ctrl+V) dan tabel akan terbentuk rapi.");
+        }).catch(() => {
+            // Fallback: copy plain text
+            const tempDiv = document.createElement('div');
+            tempDiv.appendChild(cloneTable);
+            const plainText = tempDiv.innerText;
+            navigator.clipboard.writeText(plainText).then(() => {
+                alert("✅ Tabel berhasil disalin dalam format teks.\nPaste ke Excel, lalu gunakan 'Text to Columns' jika perlu.");
+            }).catch(() => {
+                alert("❌ Gagal menyalin. Silakan copy manual dengan seleksi tabel.");
+            });
+        });
     }
     
     async function saveBatchChanges() {
@@ -595,7 +766,7 @@
         renderTripleCalendar();
     }
     
-    // ======================= EXPORT JADWAL 2 MINGGU (NAMA LENGKAP) =======================
+    // ======================= EXPORT JADWAL 2 MINGGU =======================
     async function generateFortnightSchedule() {
         const month = parseInt(document.getElementById("exportMonthSelect").value);
         const year = parseInt(document.getElementById("exportYearInput").value);
@@ -612,21 +783,15 @@
         const startDate = `${year}-${String(month+1).padStart(2,'0')}-${String(startDay).padStart(2,'0')}`;
         const endDate = `${year}-${String(month+1).padStart(2,'0')}-${String(endDay).padStart(2,'0')}`;
         
-        // Filter jadwal dalam rentang
         const fortnightSchedules = schedules.filter(s => s.date >= startDate && s.date <= endDate);
+        const filteredEmployees = employees.filter(emp => emp.callSign !== "PLI" && emp.callSign !== "PBC");
         
-        // ⭐ HANYA tampilkan petugas yang BUKAN PLI dan BUKAN PBC
-        const filteredEmployees = employees.filter(emp => 
-            emp.callSign !== "PLI" && emp.callSign !== "PBC"
-        );
-        
-        // Kelompokkan per petugas
         const employeeTasks = new Map();
         filteredEmployees.forEach(emp => {
             employeeTasks.set(emp.callSign, { 
                 fdskDates: [], 
                 msosDates: [], 
-                name: emp.name,      // ← nama lengkap
+                name: emp.name,
                 callSign: emp.callSign 
             });
         });
@@ -635,64 +800,46 @@
             const empData = employeeTasks.get(s.person);
             if (!empData) return;
             const dayNum = parseInt(s.date.split('-')[2]);
-            if (s.task === "FDSK") {
-                empData.fdskDates.push(dayNum);
-            } else if (s.task === "MSOS") {
-                empData.msosDates.push(dayNum);
-            }
+            if (s.task === "FDSK") empData.fdskDates.push(dayNum);
+            else if (s.task === "MSOS") empData.msosDates.push(dayNum);
         });
         
-        // Sortir tanggal
         for (let [_, data] of employeeTasks) {
             data.fdskDates.sort((a,b) => a-b);
             data.msosDates.sort((a,b) => a-b);
         }
         
-        // Buat tabel HTML dengan border yang akan terbawa ke Word
         let tableHtml = `
             <table style="width:100%; border-collapse:collapse; font-family:'Inter', sans-serif; font-size:13px;" border="1" cellpadding="8" cellspacing="0">
-                <thead>
-                    <tr style="background-color:#f1f5f9;">
-                        <th style="border:1px solid #cbd5e1; padding:8px; text-align:center;">No</th>
-                        <th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Nama Petugas</th>
-                        <th style="border:1px solid #cbd5e1; padding:8px; text-align:center;">Kode Petugas</th>
-                        <th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Loket Layanan Informasi (FDSK)</th>
-                        <th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Media Sosial (MSOS)</th>
-                    </tr>
-                </thead>
-                <tbody>
+                <thead><tr style="background-color:#f1f5f9;">
+                    <th style="border:1px solid #cbd5e1; padding:8px; text-align:center;">No</th>
+                    <th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Nama Petugas</th>
+                    <th style="border:1px solid #cbd5e1; padding:8px; text-align:center;">Kode Petugas</th>
+                    <th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Loket Layanan Informasi (FDSK)</th>
+                    <th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Media Sosial (MSOS)</th>
+                  <tr></thead><tbody>
         `;
         
         let no = 1;
         for (let [callSign, data] of employeeTasks) {
             const fdskStr = data.fdskDates.length > 0 ? data.fdskDates.join(', ') : '-';
             const msosStr = data.msosDates.length > 0 ? data.msosDates.join(', ') : '-';
-            tableHtml += `
-                <tr>
-                    <td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${no++}</td>
-                    <td style="border:1px solid #cbd5e1; padding:8px;">${data.name}</td>
-                    <td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${callSign}</td>
-                    <td style="border:1px solid #cbd5e1; padding:8px;">${fdskStr}</td>
-                    <td style="border:1px solid #cbd5e1; padding:8px;">${msosStr}</td>
-                </tr>
-            `;
+            tableHtml += `<tr>
+                <td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${no++}</td>
+                <td style="border:1px solid #cbd5e1; padding:8px;">${data.name}</td>
+                <td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${callSign}</td>
+                <td style="border:1px solid #cbd5e1; padding:8px;">${fdskStr}</td>
+                <td style="border:1px solid #cbd5e1; padding:8px;">${msosStr}</td>
+              </tr>`;
         }
         
-        tableHtml += `
-                </tbody>
-            </table>
+        tableHtml += `</tbody></table>
             <p style="margin-top:16px; font-size:12px; color:#6c757d; text-align:center;">
                 Periode: ${startDate} s.d. ${endDate} | FDSK = Loket Layanan Informasi, MSOS = Media Sosial (angka = tanggal bertugas)
-            </p>
-        `;
+            </p>`;
         
-        const resultContainer = document.getElementById("exportFortnightResult");
-        resultContainer.innerHTML = tableHtml;
-        
-        const copyBtn = document.getElementById("copyFortnightTableBtn");
-        copyBtn.disabled = false;
-        
-        // Simpan HTML untuk copy
+        document.getElementById("exportFortnightResult").innerHTML = tableHtml;
+        document.getElementById("copyFortnightTableBtn").disabled = false;
         window.currentFortnightHTML = tableHtml;
     }
     
@@ -701,43 +848,18 @@
             alert("Tidak ada data. Silakan klik Tampilkan terlebih dahulu.");
             return;
         }
-        
-        // Buat HTML lengkap untuk clipboard
-        const htmlToCopy = `
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 13px; }
-                    th, td { border: 1px solid #000; padding: 8px; vertical-align: top; }
-                    th { background-color: #f1f5f9; font-weight: bold; text-align: center; }
-                    td { text-align: left; }
-                </style>
-            </head>
-            <body>
-                ${window.currentFortnightHTML}
-            </body>
-            </html>
-        `;
-        
-        // Salin ke clipboard sebagai HTML
+        const htmlToCopy = `<html><head><meta charset="UTF-8"><style>table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;}th,td{border:1px solid #000;padding:8px;vertical-align:top;}th{background:#f1f5f9;font-weight:bold;text-align:center;}td{text-align:left;}</style></head><body>${window.currentFortnightHTML}</body></html>`;
         const blob = new Blob([htmlToCopy], { type: 'text/html' });
-        const data = [new ClipboardItem({
-            [blob.type]: blob
-        })];
-        
+        const data = [new ClipboardItem({ [blob.type]: blob })];
         navigator.clipboard.write(data).then(() => {
             alert("✅ Tabel berhasil disalin!\n\nPaste langsung ke Microsoft Word (Ctrl+V) dan tabel akan terbentuk rapi dengan garis.");
         }).catch(() => {
-            // Fallback: copy plain text
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = window.currentFortnightHTML;
             const plainText = tempDiv.innerText;
             navigator.clipboard.writeText(plainText).then(() => {
                 alert("✅ Tabel berhasil disalin dalam format teks.\nPaste ke Word, lalu atur format tabel manual.");
-            }).catch(() => {
-                alert("❌ Gagal menyalin. Silakan copy manual.");
-            });
+            }).catch(() => alert("❌ Gagal menyalin. Silakan copy manual."));
         });
     }
     
@@ -788,80 +910,47 @@
         });
     }
     
-    // ======================= REFRESH UI UTAMA (Squad hanya menghitung WFO) =======================
+    // ======================= REFRESH UI UTAMA =======================
     function refreshAllUI() {
         const today = getTodayLocal();
-        // Squad hari ini
         const sdmMap = new Map();
         schedules.filter(s => s.date === today).forEach(s => sdmMap.set(s.person, { task: s.task, status: s.status }));
         
-        // Hanya menghitung pegawai dengan status WFO
         let totalWFO = 0;
         let squadHtml = "";
         employees.forEach((emp, idx) => {
             const assign = sdmMap.get(emp.callSign);
             let statusText = "Tidak bertugas", statusClass = "status-none", posisi = emp.role;
-            let isWFO = false;
-            
             if (assign) {
                 statusText = assign.status;
-                if (statusText === "WFO") {
-                    isWFO = true;
-                    totalWFO++;
-                } else if (statusText === "WFH") statusClass = "status-wfh";
-                else if (statusText === "Cuti") statusClass = "status-cuti";
-                else if (statusText === "ST") statusClass = "status-st";
+                if (statusText === "WFO") totalWFO++;
                 if (assign.task) posisi = assign.task;
-            }
-            
-            // Tentukan class berdasarkan status
-            if (assign) {
                 if (assign.status === "WFO") statusClass = "status-wfo";
                 else if (assign.status === "WFH") statusClass = "status-wfh";
                 else if (assign.status === "Cuti") statusClass = "status-cuti";
                 else if (assign.status === "ST") statusClass = "status-st";
-                else statusClass = "status-none";
             }
-            
-            squadHtml += `<tr>
-                            <td>${idx+1}</td>
-                            <td><strong>${emp.callSign}</strong><br><small>${emp.name}</small></td>
-                            <td>${posisi}</td>
-                            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                          </tr>`;
+            squadHtml += `<tr><td>${idx+1}</td><td><strong>${emp.callSign}</strong><br><small>${emp.name}</small></td><td>${posisi}</td><td><span class="status-badge ${statusClass}">${statusText}</span></td></tr>`;
         });
         document.getElementById("squadTbody").innerHTML = squadHtml;
         document.getElementById("todaySquadCount").innerText = totalWFO;
         document.getElementById("squadStatusText").innerHTML = totalWFO === employees.length ? "Full Squad! 🎉" : `${totalWFO} personel WFO hari ini`;
         
-        // Kegiatan hari ini
         const todayEvents = reminders.filter(r => r.date === today);
         document.getElementById("todayEventsCount").innerText = todayEvents.length;
         document.getElementById("todayEventList").innerHTML = todayEvents.length ? todayEvents.map(e => `• ${e.description} (${e.pic})`).join('<br>') : "<i>Tidak ada kegiatan</i>";
         
-        // Due Date (3 hari ke depan)
         const threeDaysLater = new Date();
         threeDaysLater.setDate(threeDaysLater.getDate() + 3);
         const threeDaysStr = threeDaysLater.toISOString().slice(0,10);
         const dueEvents = reminders.filter(r => r.date >= today && r.date <= threeDaysStr);
         document.getElementById("dueCount").innerText = dueEvents.length;
-        if (dueEvents.length === 0) {
-            document.getElementById("dueEventList").innerHTML = "<i>Tidak ada due date</i>";
-        } else {
-            document.getElementById("dueEventList").innerHTML = dueEvents.map(e => `• ${e.date.substring(5)}: ${e.description} (${e.pic})`).join('<br>');
-        }
+        document.getElementById("dueEventList").innerHTML = dueEvents.length ? dueEvents.map(e => `• ${e.date.substring(5)}: ${e.description} (${e.pic})`).join('<br>') : "<i>Tidak ada due date</i>";
         
-        // Tabel acara hari ini
         const eventBody = document.getElementById("eventTbody");
         if (todayEvents.length === 0) eventBody.innerHTML = `<tr><td colspan="4">🌸 Tidak ada acara</td></tr>`;
-        else eventBody.innerHTML = todayEvents.map((ev, i) => `<tr>
-                            <td>${i+1}</td>
-                            <td>${ev.description}</td>
-                            <td>👤 ${ev.pic}</td>
-                            <td>${ev.notes || '-'}</td>
-                          </tr>`).join('');
+        else eventBody.innerHTML = todayEvents.map((ev, i) => `<tr><td>${i+1}</td><td>${ev.description}</td><td>👤 ${ev.pic}</td><td>${ev.notes || '-'}</td></tr>`).join('');
         
-        // Magic message
         let msg = todayEvents.length ? "Semangat tim menyala!" : "Hari tanpa kegiatan, isi persiapan~";
         if (dueEvents.length > 0) msg += " Ada deadline!";
         document.getElementById("magicMessage").innerHTML = msg;
@@ -881,6 +970,7 @@
     document.getElementById("randomizeBtn").onclick = () => {
         if (confirm("Acak jadwal akan menimpa semua jadwal yang ada di bulan ini. Lanjutkan?")) randomizeSchedule();
     };
+    document.getElementById("copyTableToExcelBtn").onclick = () => copyTableToExcel();
     document.getElementById("prevMonthBatch").onclick = () => {
         currentBatchDate.setMonth(currentBatchDate.getMonth() - 1);
         batchData = {};
@@ -897,25 +987,11 @@
     document.getElementById("openEmployeeBtn").onclick = () => { renderEmployeeList(); document.getElementById("employeeModal").style.display = "block"; };
     document.getElementById("closeEmployeeBtn").onclick = () => document.getElementById("employeeModal").style.display = "none";
     document.getElementById("addEmployeeBtn").onclick = addEmployee;
-    
-    // Export buttons
-    document.getElementById("exportFortnightBtn").onclick = () => {
-        document.getElementById("exportFortnightModal").style.display = "block";
-    };
-    document.getElementById("closeExportFortnightBtn").onclick = () => {
-        document.getElementById("exportFortnightModal").style.display = "none";
-    };
-    document.getElementById("doExportFortnightBtn").onclick = () => {
-        generateFortnightSchedule();
-    };
-    document.getElementById("copyFortnightTableBtn").onclick = () => {
-        copyFortnightTableToClipboard();
-    };
-    
-    // Tombol kembali ke Index.html
-    document.getElementById("backToIndexBtn").onclick = () => {
-        window.location.href = '../index.html';
-    };
+    document.getElementById("exportFortnightBtn").onclick = () => { document.getElementById("exportFortnightModal").style.display = "block"; };
+    document.getElementById("closeExportFortnightBtn").onclick = () => { document.getElementById("exportFortnightModal").style.display = "none"; };
+    document.getElementById("doExportFortnightBtn").onclick = () => { generateFortnightSchedule(); };
+    document.getElementById("copyFortnightTableBtn").onclick = () => { copyFortnightTableToClipboard(); };
+    document.getElementById("backToIndexBtn").onclick = () => { window.location.href = '../index.html'; };
     
     window.onclick = (e) => {
         if (e.target.classList.contains("modal")) e.target.style.display = "none";
