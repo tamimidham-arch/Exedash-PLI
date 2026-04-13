@@ -51,12 +51,83 @@
         .hero-btn { padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; border: none; }
         .hero-btn.primary { background: white; color: #1e3c72; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .hero-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
-        .hero-stats { flex: 1; display: flex; gap: 20px; justify-content: flex-end; min-width: 250px; position: relative; z-index: 1; }
-        .hero-stat { text-align: center; padding: 12px 18px; background: rgba(255,255,255,0.15); border-radius: 18px; backdrop-filter: blur(4px); transition: transform 0.3s ease; border: 1px solid rgba(255,255,255,0.2); }
+        
+        /* Container untuk semua kartu di sisi kanan */
+        .hero-stats {
+            flex: 3;
+            display: flex;
+            gap: 20px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+        /* Kartu statistik asli (Kerugian, Hotspot, Krisis) */
+        .hero-stat {
+            text-align: center;
+            padding: 12px 18px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 18px;
+            backdrop-filter: blur(4px);
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+            min-width: 110px;
+        }
         .hero-stat:hover { transform: translateY(-5px); background: rgba(255,255,255,0.25); }
         .hero-stat-value { font-size: 28px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
         .hero-stat-label { font-size: 11px; opacity: 0.8; margin-top: 5px; letter-spacing: 0.5px; }
         
+        /* Kartu tambahan untuk Squad dan Acara */
+        .extra-card {
+            text-align: left;
+            padding: 12px 18px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 18px;
+            backdrop-filter: blur(4px);
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+            min-width: 180px;
+            cursor: pointer;
+        }
+        .extra-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.25); }
+        .extra-card-title {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .extra-card-list {
+            font-size: 11px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .extra-card-list-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px dashed rgba(255,255,255,0.2);
+        }
+        .extra-card-list-item span:first-child { font-weight: 600; }
+        .extra-card-list-item span:last-child { color: #fbbf24; }
+        .extra-card-empty {
+            font-size: 11px;
+            opacity: 0.7;
+            font-style: italic;
+            padding: 5px 0;
+        }
+        
+        @media (max-width: 1000px) {
+            .hero-section { flex-direction: column; text-align: center; }
+            .hero-stats { justify-content: center; }
+            .hero-content { text-align: center; }
+            .hero-description { max-width: 100%; }
+        }
+        
+        /* Kode asli lainnya (tidak diubah) */
         .nav-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 30px; }
         .nav-card { background: white; border-radius: 15px; padding: 20px; text-align: center; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 5px 12px rgba(0,0,0,0.08); border: 1px solid #e9ecef; }
         .nav-card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.12); }
@@ -234,9 +305,31 @@
                 </div>
             </div>
             <div class="hero-stats">
-                <div class="hero-stat"><div class="hero-stat-value" id="hero-kerugian">--</div><div class="hero-stat-label">Kerugian Terhindar</div></div>
-                <div class="hero-stat"><div class="hero-stat-value" id="hero-hotspot">--</div><div class="hero-stat-label">Hotspot Darurat</div></div>
-                <div class="hero-stat"><div class="hero-stat-value" id="hero-krisis">--</div><div class="hero-stat-label">Krisis Aktif</div></div>
+                <!-- Kartu asli: Kerugian, Hotspot, Krisis -->
+                <div class="hero-stat">
+                    <div class="hero-stat-value" id="hero-kerugian">--</div>
+                    <div class="hero-stat-label">Kerugian Terhindar</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value" id="hero-hotspot">--</div>
+                    <div class="hero-stat-label">Hotspot Darurat</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value" id="hero-krisis">--</div>
+                    <div class="hero-stat-label">Krisis Aktif</div>
+                </div>
+                
+                <!-- Kartu tambahan: SQUAD (WFO hari ini) -->
+                <div class="extra-card" id="squadCard">
+                    <div class="extra-card-title"><i class="fas fa-users"></i> SQUAD</div>
+                    <div id="squadList" class="extra-card-list">Memuat...</div>
+                </div>
+                
+                <!-- Kartu tambahan: Acara Hari Ini -->
+                <div class="extra-card" id="eventsCard">
+                    <div class="extra-card-title"><i class="fas fa-calendar-day"></i> Acara Hari Ini</div>
+                    <div id="eventsList" class="extra-card-list">Memuat...</div>
+                </div>
             </div>
         </div>
         
@@ -277,7 +370,6 @@
     
     <script>
         // ==================== DATA PUBLIKASI YANG BENAR (21.233) ====================
-        // Data engagement yang menghasilkan total jangkauan 21.233
         const publikasiEngagementData = [
             { no: 1, tanggal: "01/01/2026", channel: "IG/FB", metode: "Repost", ig_reach: 343, fb_reach: 41, x_reach: 0 },
             { no: 2, tanggal: "01/01/2026", channel: "IG/FB", metode: "Mandiri", ig_reach: 276, fb_reach: 106, x_reach: 0 },
@@ -310,7 +402,6 @@
             { no: 29, tanggal: "26/03/2026", channel: "IG/FB", metode: "Mandiri", ig_reach: 110, fb_reach: 36, x_reach: 0 }
         ];
         
-        // Hitung total jangkauan publikasi YTD (HARUS 21.233)
         function calculateTotalJangkauanPublikasi() {
             let total = 0;
             publikasiEngagementData.forEach(item => {
@@ -319,25 +410,16 @@
             return total;
         }
         
-        const TOTAL_JANGKAUAN_PUBLIKASI_YTD = calculateTotalJangkauanPublikasi(); // = 21.233
+        const TOTAL_JANGKAUAN_PUBLIKASI_YTD = calculateTotalJangkauanPublikasi();
         
         // ==================== KONFIGURASI ====================
         const API_URL = 'https://script.google.com/macros/s/AKfycbywHucFlh5aJAPbVMUWGA_REGi9lrax2IjYMbPtHJoMTIYqIriHeRFnjygQMbICNJphhg/exec';
         
         let dashboardData = { 
-            layanan: [], 
-            channel: [],
-            rataRata: [],
-            dampak: [], 
-            hotspot: [], 
-            aduan: [],
-            penyuluhan: [], 
-            skm: [], 
-            skpl: [], 
-            cvc: [], 
-            publikasi: [], 
-            forensik: [], 
-            stakeholder: [] 
+            layanan: [], channel: [], rataRata: [], dampak: [], hotspot: [], aduan: [],
+            penyuluhan: [], skm: [], skpl: [], cvc: [], publikasi: [], forensik: [], stakeholder: [],
+            schedules: [],   // dari sheet SQUAD
+            reminders: []    // dari sheet REMINDERS
         };
         
         let totalLayananYTD = 0;
@@ -459,21 +541,12 @@
         }
         
         function initMap() {
-            if (!map) {
-                map = L.map('map').setView([-6.5, 107], 10);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    attribution: '© OpenStreetMap',
-                    maxZoom: 19
-                }).addTo(map);
-                isMapInitialized = true;
-            }
-            if (map.eachLayer) {
-                map.eachLayer(function(layer) {
-                    if (layer instanceof L.Marker) {
-                        map.removeLayer(layer);
-                    }
-                });
-            }
+            if (map) map.remove();
+            map = L.map('map').setView([-6.5, 107], 10);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(map);
             const validAduan = dashboardData.aduan.filter(aduan => {
                 const lat = parseFloat(aduan.lat);
                 const lng = parseFloat(aduan.lon);
@@ -591,7 +664,6 @@
             const reportTimestamp = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')}`;
             const channelChartId = 'channel-chart-report';
             
-            // Helper untuk status SKM berdasarkan skala 1-5
             function getSKMStatus(nilai) {
                 const num = parseFloat(nilai);
                 if (isNaN(num)) return { text: 'Tidak tersedia', class: 'kurang' };
@@ -673,7 +745,7 @@
         
         async function fetchAllData() {
             try {
-                const sheets = ['LAYANAN', 'CHANNEL', 'RATA_RATA', 'DAMPAK_RISIKO', 'HOTSPOT', 'ADUAN', 'PENYULUHAN', 'SKM', 'SKPL_DATA', 'CVC_DATA', 'PUBLIKASI', 'FORENSIK', 'STAKEHOLDER'];
+                const sheets = ['LAYANAN', 'CHANNEL', 'RATA_RATA', 'DAMPAK_RISIKO', 'HOTSPOT', 'ADUAN', 'PENYULUHAN', 'SKM', 'SKPL_DATA', 'CVC_DATA', 'PUBLIKASI', 'FORENSIK', 'STAKEHOLDER', 'SQUAD', 'REMINDERS'];
                 const results = await Promise.all(sheets.map(s => fetchSheetData(s)));
                 dashboardData.layanan = results[0] ? parseSheetData(results[0]) : [];
                 dashboardData.channel = results[1] || [];
@@ -688,6 +760,9 @@
                 dashboardData.publikasi = results[10] ? parseSheetData(results[10]) : [];
                 dashboardData.forensik = results[11] ? parseSheetData(results[11]) : [];
                 dashboardData.stakeholder = results[12] ? parseSheetData(results[12]) : [];
+                dashboardData.schedules = results[13] ? parseSheetData(results[13]) : [];
+                dashboardData.reminders = results[14] ? parseSheetData(results[14]) : [];
+                
                 if (dashboardData.channel && dashboardData.channel.length > 0) {
                     const channelResult = getChannelData(dashboardData.channel);
                     totalLayananYTD = channelResult.ytdTotal;
@@ -708,6 +783,7 @@
                 document.getElementById('last-update').innerText = new Date().toLocaleDateString('id-ID');
                 renderDashboard();
                 updateHeroSection();
+                updateHeroSquadAndEvents(); // update kartu squad & acara
             } catch (error) {
                 console.error(error);
                 useDemoData = true;
@@ -716,6 +792,7 @@
                 document.getElementById('data-status').className = 'status-badge offline';
                 renderDashboard();
                 updateHeroSection();
+                updateHeroSquadAndEvents();
             }
         }
         
@@ -732,6 +809,8 @@
             dashboardData.forensik = [{ ID: '1', Tanggal: '2026-01-22', Hook: 'Bea Cukai Bogor lampaui target penerimaan negara', Framing: 'Layanan', Sentiment: 'POSITIF', Level: 'LOW', Status: 'Selesai' }, { ID: '2', Tanggal: '2026-02-05', Hook: 'Forum Mahasiswa desak transparansi kasus PT Golden Agin Nusa', Framing: 'Emosional', Sentiment: 'NEGATIF', Level: 'SUBSTANTIVE', Status: 'Proses' }];
             dashboardData.skm = [{ ID: '1', Triwulan: 'I', Tahun: '2026', SKM_Nilai: '4.84', Deadline_Terpenuhi: 'Sudah terinput dengan log tanggal 02/04/2026 06:29', Keterangan: 'log tanggal 01/04/2026 10:23' }];
             dashboardData.stakeholder = [{ ID: '1', Nama: 'Follower Sosmed', Prioritas: '4' }, { ID: '2', Nama: 'Pemkot Depok', Prioritas: '5' }];
+            dashboardData.schedules = [];
+            dashboardData.reminders = [];
         }
         
         function getFramingDominan() {
@@ -754,6 +833,45 @@
         function getYtdPeserta() { return dashboardData.penyuluhan.reduce((s, i) => s + (parseInt(i.Total_Peserta) || 0), 0); }
         function getYtdJangkauan() { return TOTAL_JANGKAUAN_PUBLIKASI_YTD; }
         function getLatestSKM() { if (!dashboardData.skm.length) return null; return dashboardData.skm[dashboardData.skm.length - 1]; }
+        
+        // Fungsi untuk update kartu SQUAD dan Acara Hari Ini
+        function updateHeroSquadAndEvents() {
+            const today = new Date().toISOString().slice(0,10);
+            const schedules = dashboardData.schedules || [];
+            const reminders = dashboardData.reminders || [];
+            
+            // Filter personel dengan status WFO (case insensitive)
+            const wfoList = schedules.filter(s => s.date === today && s.status && s.status.toUpperCase() === 'WFO');
+            const squadContainer = document.getElementById('squadList');
+            if (wfoList.length === 0) {
+                squadContainer.innerHTML = '<div class="extra-card-empty">Tidak ada personel WFO hari ini</div>';
+            } else {
+                squadContainer.innerHTML = wfoList.map(person => `
+                    <div class="extra-card-list-item">
+                        <span>${person.person || '-'}</span>
+                        <span>${person.task || (person.role || '')}</span>
+                    </div>
+                `).join('');
+            }
+            
+            // Filter acara hari ini
+            const todayEvents = reminders.filter(r => r.date === today);
+            const eventsContainer = document.getElementById('eventsList');
+            if (todayEvents.length === 0) {
+                eventsContainer.innerHTML = '<div class="extra-card-empty">Belum ada acara</div>';
+            } else {
+                eventsContainer.innerHTML = todayEvents.map(ev => `
+                    <div class="extra-card-list-item">
+                        <span>${ev.description || '-'}</span>
+                        <span>${ev.pic || '-'}</span>
+                    </div>
+                `).join('');
+            }
+            
+            // Klik kartu menuju squad.html
+            document.getElementById('squadCard').onclick = () => window.location.href = 'sub-dashboard/squad.html';
+            document.getElementById('eventsCard').onclick = () => window.location.href = 'sub-dashboard/squad.html';
+        }
         
         function updateHeroSection() {
             const totalKerugian = dashboardData.dampak.reduce((s, i) => s + (parseInt(i.Total_Kerugian_Terhindar)||0), 0);
@@ -790,7 +908,6 @@
             const validAduan = dashboardData.aduan.filter(a => { const lat = parseFloat(a.lat); const lng = parseFloat(a.lon); return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0; }).length;
             const demoNote = useDemoData ? '<div class="error-box" style="background:#fff3cd; color:#856404;"><i class="fas fa-info-circle"></i> <strong>Mode Demo:</strong> Menampilkan data contoh. Input data real di Google Sheets.</div>' : '';
             
-            // Helper untuk status SKM berdasarkan skala 1-5
             function getSKMStatusClass(nilai) {
                 const num = parseFloat(nilai);
                 if (isNaN(num)) return 'kurang';
