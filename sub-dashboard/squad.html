@@ -119,7 +119,7 @@
     </div>
 
     <div class="metric-row">
-        <div class="metric-card"><div class="label">👥 Today's Squad</div><div class="value" id="todaySquadCount">0</div><div class="event-list" id="squadStatusText"></div></div>
+        <div class="metric-card"><div class="label">👥 Today's Squad (WFO)</div><div class="value" id="todaySquadCount">0</div><div class="event-list" id="squadStatusText"></div></div>
         <div class="metric-card"><div class="label">✨ Kegiatan hari ini</div><div class="value" id="todayEventsCount">0</div><div class="event-list" id="todayEventList"></div></div>
         <div class="metric-card"><div class="label">⚠️ Due Date (3 hari)</div><div class="value" id="dueCount">0</div><div class="event-list" id="dueEventList"></div></div>
         <div class="magic-box"><div class="magic-emote" id="magicEmoji">🐣✨</div><div class="magic-text" id="magicMessage">Memuat...</div><i class="fas fa-wand-magic"></i></div>
@@ -447,9 +447,9 @@
             attendanceData.push({ date: d, percent, total: totalFilled, wfo: totalWFO, isHoliday: false });
         }
         
-        let attendanceHtml = `<table> <thead> <tr><th>Tanggal</th>`;
+        let attendanceHtml = `<table> <thead> 汽<th>Tanggal</th>`;
         for (let d = 1; d <= daysInMonth; d++) attendanceHtml += `<th>${d}</th>`;
-        attendanceHtml += `</tr> </thead> <tbody> <tr><th>Kehadiran WFO</th>`;
+        attendanceHtml += `</thead> <tbody> <tr><th>Kehadiran WFO</th>`;
         for (let i = 0; i < attendanceData.length; i++) {
             const ad = attendanceData[i];
             if (ad.isHoliday) {
@@ -788,26 +788,41 @@
         });
     }
     
-    // ======================= REFRESH UI UTAMA =======================
+    // ======================= REFRESH UI UTAMA (Squad hanya menghitung WFO) =======================
     function refreshAllUI() {
         const today = getTodayLocal();
         // Squad hari ini
         const sdmMap = new Map();
         schedules.filter(s => s.date === today).forEach(s => sdmMap.set(s.person, { task: s.task, status: s.status }));
-        let total = 0;
+        
+        // Hanya menghitung pegawai dengan status WFO
+        let totalWFO = 0;
         let squadHtml = "";
         employees.forEach((emp, idx) => {
             const assign = sdmMap.get(emp.callSign);
             let statusText = "Tidak bertugas", statusClass = "status-none", posisi = emp.role;
+            let isWFO = false;
+            
             if (assign) {
-                total++;
                 statusText = assign.status;
-                if (statusText === "WFO") statusClass = "status-wfo";
-                else if (statusText === "WFH") statusClass = "status-wfh";
+                if (statusText === "WFO") {
+                    isWFO = true;
+                    totalWFO++;
+                } else if (statusText === "WFH") statusClass = "status-wfh";
                 else if (statusText === "Cuti") statusClass = "status-cuti";
                 else if (statusText === "ST") statusClass = "status-st";
                 if (assign.task) posisi = assign.task;
             }
+            
+            // Tentukan class berdasarkan status
+            if (assign) {
+                if (assign.status === "WFO") statusClass = "status-wfo";
+                else if (assign.status === "WFH") statusClass = "status-wfh";
+                else if (assign.status === "Cuti") statusClass = "status-cuti";
+                else if (assign.status === "ST") statusClass = "status-st";
+                else statusClass = "status-none";
+            }
+            
             squadHtml += `<tr>
                             <td>${idx+1}</td>
                             <td><strong>${emp.callSign}</strong><br><small>${emp.name}</small></td>
@@ -816,8 +831,8 @@
                           </tr>`;
         });
         document.getElementById("squadTbody").innerHTML = squadHtml;
-        document.getElementById("todaySquadCount").innerText = total;
-        document.getElementById("squadStatusText").innerHTML = total === employees.length ? "Full Squad! 🎉" : `${total} personel bertugas`;
+        document.getElementById("todaySquadCount").innerText = totalWFO;
+        document.getElementById("squadStatusText").innerHTML = totalWFO === employees.length ? "Full Squad! 🎉" : `${totalWFO} personel WFO hari ini`;
         
         // Kegiatan hari ini
         const todayEvents = reminders.filter(r => r.date === today);
