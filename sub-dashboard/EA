@@ -153,7 +153,7 @@
 <body>
 <div class="container">
     <div class="black-header">
-        <button class="back-button" onclick="window.location.href='index.html'">
+        <button class="back-button" onclick="window.location.href='../index.html'">
             <i class="fas fa-arrow-left"></i> ← Kembali ke Dashboard
         </button>
         <h1>🔈🗯️ EMPLOYEE ADVOCACY BC BOGOR</h1>
