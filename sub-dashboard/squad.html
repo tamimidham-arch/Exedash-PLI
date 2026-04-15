@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Sub Dashboard Tim Operasional | Scheduler Cerdas + Due Date List</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f5f7fb; font-family: 'Inter', sans-serif; padding: 20px 16px; color: #1e293b; }
+        .dashboard { max-width: 1400px; margin: 0 auto; }
+        .title-3d {
+            background: linear-gradient(145deg, #d946ef, #a21caf);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 60px;
+            margin-bottom: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 10px 0 #701a75;
+        }
+        .title-3d h1 { font-size: 1.7rem; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+        .online-badge { background: #22c55e; color: white; padding: 6px 14px; border-radius: 40px; font-size: 0.75rem; font-weight: bold; display: inline-flex; align-items: center; gap: 6px; }
+        .offline-badge { background: #ef4444; padding: 6px 14px; border-radius: 40px; font-size: 0.75rem; font-weight: bold; display: inline-flex; align-items: center; gap: 6px; color:white; }
+        .refresh-btn, .scheduler-btn, .employee-btn, .export-btn { background: #3b82f6; border: none; padding: 8px 16px; border-radius: 40px; color: white; font-weight: bold; cursor: pointer; margin-left: 10px; }
+        .scheduler-btn { background: #8b5cf6; }
+        .employee-btn { background: #10b981; }
+        .export-btn { background: #f59e0b; }
+        .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .metric-card { background: white; border-radius: 20px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #e9edf2; }
+        .metric-card .label { font-size: 0.7rem; font-weight: 600; color: #5b6e8c; }
+        .metric-card .value { font-size: 1.6rem; font-weight: 800; color: #1e3c72; }
+        .event-list { font-size: 0.65rem; margin-top: 8px; color: #475569; max-height: 60px; overflow-y: auto; }
+        .magic-box { background: linear-gradient(135deg, #ffedd5, #fff3e0); border-radius: 20px; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+        .tables-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+        .table-card { background: white; border-radius: 20px; padding: 14px; border: 1px solid #eef2f5; }
+        .table-card h3 { font-size: 0.9rem; margin-bottom: 10px; border-left: 3px solid #f97316; padding-left: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+        th, td { padding: 6px 4px; text-align: left; border-bottom: 1px solid #edf2f7; }
+        .status-badge { display: inline-block; padding: 2px 6px; border-radius: 30px; font-size: 0.6rem; font-weight: 600; }
+        .status-wfo { background: #dcfce7; color: #15803d; }
+        .status-wfh { background: #fff3c4; color: #b45309; }
+        .status-cuti { background: #fee2e2; color: #b91c1c; }
+        .status-st { background: #e0e7ff; color: #1e3a8a; }
+        .status-libur { background: #e2e3e5; color: #6c757d; }
+        .status-none { background: #f1f5f9; color: #475569; }
+        .triple-calendar { background: white; border-radius: 28px; padding: 16px; margin-bottom: 25px; border: 1px solid #eef2f5; }
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+        .nav-buttons { display: flex; gap: 8px; }
+        .nav-btn { background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; }
+        .year-select { padding: 4px 10px; border-radius: 30px; border: 1px solid #cbd5e1; font-size: 0.8rem; }
+        .calendars-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .month-card { background: #fefefe; border-radius: 20px; padding: 10px; border: 1px solid #edf2f7; }
+        .month-header { text-align: center; font-weight: 700; font-size: 0.85rem; margin-bottom: 10px; background: #bfdbfe; padding: 4px; border-radius: 30px; color: #1e3a8a; }
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.6rem; font-weight: 600; margin-bottom: 6px; }
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .day-cell { aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 500; border-radius: 12px; cursor: pointer; background: #faf9f6; position: relative; }
+        .day-cell.today { background: #f97316; color: white; font-weight: bold; }
+        .day-cell.holiday { background: #fee2e2; color: #b91c1c; }
+        .day-cell.weekend { color: #dc2626; }
+        .day-cell.has-event { background: #fff9c4; }
+        .day-cell:hover { background: #ffedd5; transform: scale(0.98); }
+        .event-dot { font-size: 0.5rem; margin-top: 2px; }
+        .legend { display: flex; gap: 16px; justify-content: center; margin-top: 16px; font-size: 0.65rem; flex-wrap: wrap; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; overflow: auto; padding: 20px; }
+        .modal-content { background: white; max-width: 95%; margin: 20px auto; border-radius: 28px; padding: 20px; position: relative; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+        .close-modal { background: #ef4444; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; }
+        .scheduler-table-container { overflow-x: auto; max-height: 70vh; position: relative; }
+        .scheduler-table {
+            border-collapse: collapse;
+            font-size: 0.7rem;
+            min-width: 800px;
+        }
+        .scheduler-table th,
+        .scheduler-table td {
+            border: 1px solid #ddd;
+            padding: 8px 6px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .scheduler-table th {
+            background: #f1f5f9;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .scheduler-table th:first-child,
+        .scheduler-table td:first-child {
+            position: sticky;
+            left: 0;
+            background-color: #f8fafc;
+            z-index: 5;
+            font-weight: 700;
+            text-align: left;
+            min-width: 110px;
+        }
+        .scheduler-table th:first-child {
+            z-index: 15;
+            background-color: #e2e8f0;
+        }
+        .scheduler-table td:first-child {
+            background-color: #fefce8;
+            font-weight: 700;
+        }
+        .scheduler-table td { cursor: pointer; background: #fefefe; transition: 0.1s; }
+        .scheduler-table td:hover { background: #fff3e0; }
+        .scheduler-table td.holiday-cell { background: #e2e3e5; cursor: not-allowed; color: #6c757d; }
+        .scheduler-table td.holiday-cell:hover { background: #e2e3e5; }
+        .scheduler-table th.rekap-col,
+        .scheduler-table td.rekap-col {
+            background-color: #f0fdf4;
+            min-width: 50px;
+            font-weight: 600;
+        }
+        .scheduler-table th.rekap-col {
+            background-color: #dcfce7;
+        }
+        .flag-belum-ideal { background-color: #fef08a !important; color: #854d0e; font-weight: bold; }
+        .tfoot-summary td { background: #eef2ff; font-weight: 700; border-top: 2px solid #94a3b8; }
+        .btn-save-batch { background: #10b981; margin-top: 16px; padding: 10px 24px; border: none; border-radius: 40px; color: white; font-weight: bold; cursor: pointer; }
+        .btn-random { background: #f97316; margin-right: 10px; padding: 10px 24px; border: none; border-radius: 40px; color: white; font-weight: bold; cursor: pointer; }
+        .btn-copy-excel { background: #3b82f6; margin-left: 10px; padding: 10px 20px; border-radius: 40px; border: none; color: white; font-weight: bold; cursor: pointer; }
+        .month-picker { display: flex; gap: 12px; align-items: center; }
+        .picker-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: center; }
+        .picker-card { background: white; border-radius: 28px; padding: 24px; width: 280px; text-align: center; }
+        .picker-options { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+        .picker-options button { background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; padding: 8px; border-radius: 40px; cursor: pointer; }
+        .footer-note { text-align: center; font-size: 0.65rem; margin-top: 20px; color: #5b6e8c; }
+        .attendance-row { margin-top: 16px; padding: 10px; background: #f8fafc; border-radius: 16px; font-size: 0.7rem; overflow-x: auto; }
+        .attendance-row table { width: 100%; border-collapse: collapse; }
+        .attendance-row th, .attendance-row td { padding: 4px 6px; text-align: center; border: 1px solid #e2e8f0; }
+        .attendance-low { background: #fee2e2; color: #dc2626; font-weight: bold; }
+        .weekend-header { color: #dc2626; background: #fff5f5; }
+        .holiday-header { background: #fee2e2; color: #b91c1c; }
+        .export-table-container { overflow-x: auto; max-height: 500px; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; background: #faf9f6; }
+        .export-table { width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif; font-size: 13px; }
+        .export-table th, .export-table td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; vertical-align: top; }
+        .export-table th { background: #f1f5f9; font-weight: 700; }
+        @media (max-width: 900px) {
+            .calendars-container { grid-template-columns: 1fr; }
+            .tables-row { grid-template-columns: 1fr; }
+            .metric-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="title-3d">
+        <h1><i class="fas fa-cloud-upload-alt"></i> Sub Dashboard Tim Operasional</h1>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <div id="onlineIndicator" class="offline-badge"><i class="fas fa-circle"></i> OFFLINE</div>
+            <button id="manualRefreshBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button>
+            <button id="openSchedulerBtn" class="scheduler-btn"><i class="fas fa-calendar-alt"></i> Scheduler Bulanan</button>
+            <button id="openEmployeeBtn" class="employee-btn"><i class="fas fa-users"></i> Kelola Pegawai</button>
+            <button id="exportFortnightBtn" class="export-btn"><i class="fas fa-file-export"></i> 📋 Export Jadwal 2 Minggu</button>
+            <button id="backToIndexBtn" style="background:#6c757d; border:none; padding:8px 16px; border-radius:40px; color:white; font-weight:bold; cursor:pointer;"><i class="fas fa-arrow-left"></i> Kembali ke Dashboard</button>
+        </div>
+    </div>
+
+    <div class="metric-row">
+        <div class="metric-card"><div class="label">👥 Today's Squad (WFO)</div><div class="value" id="todaySquadCount">0</div><div class="event-list" id="squadStatusText"></div></div>
+        <div class="metric-card"><div class="label">✨ Kegiatan hari ini</div><div class="value" id="todayEventsCount">0</div><div class="event-list" id="todayEventList"></div></div>
+        <div class="metric-card"><div class="label">⚠️ Due Date (3 hari)</div><div class="value" id="dueCount">0</div><div class="event-list" id="dueEventList"></div></div>
+        <div class="magic-box"><div class="magic-emote" id="magicEmoji">🐣✨</div><div class="magic-text" id="magicMessage">Memuat...</div><i class="fas fa-wand-magic"></i></div>
+    </div>
+
+    <div class="tables-row">
+        <div class="table-card"><h3><i class="fas fa-user-friends"></i> Squad hari ini</h3>
+            <table><thead>汽<th>No</th><th>Nama (Call Sign)</th><th>Posisi</th><th>Status</th> </thead><tbody id="squadTbody"></tbody></table>
+        </div>
+        <div class="table-card"><h3><i class="fas fa-calendar-check"></i> Acara hari ini</h3>
+            <table><thead>汽<th>No</th><th>Nama Acara</th><th>PIC</th><th>Catatan</th> </thead><tbody id="eventTbody"></tbody></table>
+        </div>
+    </div>
+
+    <div class="triple-calendar">
+        <div class="calendar-nav">
+            <div class="nav-buttons"><button class="nav-btn" id="prevTripleBtn"><i class="fas fa-chevron-left"></i></button><button class="nav-btn" id="nextTripleBtn"><i class="fas fa-chevron-right"></i></button></div>
+            <div><label for="yearTripleSelect">Pilih Tahun: </label><select id="yearTripleSelect" class="year-select"><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option></select></div>
+        </div>
+        <div id="tripleCalendarContainer" class="calendars-container"></div>
+        <div class="legend"><span><i class="fas fa-square" style="color:#fff9c4;"></i> Ada kegiatan</span><span><i class="fas fa-square" style="color:#fee2e2;"></i> Libur nasional</span><span><i class="fas fa-square" style="color:#f97316;"></i> Hari ini</span><span style="color:#dc2626;"><i class="fas fa-square"></i> Sabtu/Minggu</span></div>
+    </div>
+
+    <!-- Modal Scheduler -->
+    <div id="schedulerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-calendar-week"></i> Scheduler Bulanan</h2>
+                <div class="month-picker">
+                    <button id="prevMonthBatch" class="nav-btn"><i class="fas fa-chevron-left"></i></button>
+                    <span id="currentMonthYear" style="font-weight: bold; width: 150px; text-align: center;"></span>
+                    <button id="nextMonthBatch" class="nav-btn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div>
+                    <button id="randomizeBtn" class="btn-random"><i class="fas fa-dice"></i> Acak Jadwal</button>
+                    <button id="copyTableToExcelBtn" class="btn-copy-excel"><i class="fas fa-copy"></i> Copy ke Excel</button>
+                    <button class="close-modal" id="closeModalBtn">&times;</button>
+                </div>
+            </div>
+            <div class="scheduler-table-container">
+                <table class="scheduler-table" id="schedulerTable">
+                    <thead id="schedulerHead"></thead>
+                    <tbody id="schedulerBody"></tbody>
+                    <tfoot id="schedulerFoot"></tfoot>
+                </table>
+            </div>
+            <div id="attendanceRow" class="attendance-row"></div>
+            <button id="saveBatchBtn" class="btn-save-batch"><i class="fas fa-save"></i> Simpan Semua Perubahan</button>
+            <div style="margin-top:12px; font-size:0.65rem; color:#475569; text-align:center;">
+                <i class="fas fa-info-circle"></i> Kolom rekap: WFO, MPP, ST, MSOS, ADM, FDSK, TOTAL | <span style="background:#fef08a;">🟡 Kuning</span> = di bawah ideal individu / total tim kurang dari kebutuhan.
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Export Jadwal 2 Minggu -->
+    <div id="exportFortnightModal" class="modal">
+        <div class="modal-content" style="max-width:1000px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-calendar-alt"></i> Export Jadwal Piket (2 Minggu)</h2>
+                <button class="close-modal" id="closeExportFortnightBtn">&times;</button>
+            </div>
+            <div style="margin-bottom:20px; display:flex; gap:15px; flex-wrap:wrap; align-items:center;">
+                <div><label>Pilih Bulan: </label><select id="exportMonthSelect"><option value="0">Januari</option><option value="1">Februari</option><option value="2">Maret</option><option value="3">April</option><option value="4">Mei</option><option value="5">Juni</option><option value="6">Juli</option><option value="7">Agustus</option><option value="8">September</option><option value="9">Oktober</option><option value="10">November</option><option value="11">Desember</option></select></div>
+                <div><label>Tahun: </label><input type="number" id="exportYearInput" value="2026" min="2026" max="2030" style="width:80px; padding:6px; border-radius:8px; border:1px solid #ccc;"></div>
+                <div><label>Pilih Pekan: </label><select id="exportWeekSelect"><option value="1">Minggu 1-2 (tanggal 1-14)</option><option value="2">Minggu 3-4 (tanggal 15-akhir)</option></select></div>
+                <button id="doExportFortnightBtn" style="background:#10b981; padding:8px 20px; border-radius:40px; border:none; color:white; font-weight:bold; cursor:pointer;"><i class="fas fa-search"></i> Tampilkan</button>
+            </div>
+            <div id="exportFortnightResult" class="export-table-container"><p style="text-align:center; color:#6c757d;">Pilih bulan, tahun, dan pekan lalu klik Tampilkan</p></div>
+            <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;"><button id="copyFortnightTableBtn" style="background:#3b82f6; padding:8px 20px; border-radius:40px; border:none; color:white; font-weight:bold; cursor:pointer;" disabled><i class="fas fa-copy"></i> Salin ke Clipboard (Paste ke Word)</button></div>
+        </div>
+    </div>
+
+    <!-- Modal Picker -->
+    <div id="pickerOverlay" class="picker-overlay"><div class="picker-card"><h4 id="pickerTitle">Pilih</h4><div class="picker-options" id="pickerOptions"></div><button id="pickerCancelBtn" style="background:#ef4444; color:white;">Batal</button></div></div>
+
+    <!-- Modal Pegawai -->
+    <div id="employeeModal" class="modal"><div class="modal-content" style="max-width:600px;"><div class="modal-header"><h2>Kelola Pegawai</h2><button class="close-modal" id="closeEmployeeBtn">&times;</button></div>
+        <div style="margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap;"><input type="text" id="empName" placeholder="Nama" style="flex:1; padding:8px; border-radius:40px;"><input type="text" id="empRole" placeholder="Role" style="flex:1; padding:8px; border-radius:40px;"><input type="text" id="empCallSign" placeholder="Call Sign" style="flex:1; padding:8px; border-radius:40px;"><button id="addEmployeeBtn" style="background:#10b981;">Tambah</button></div>
+        <div class="scheduler-table-container"><table style="width:100%"><thead>汽<th>Nama</th><th>Role</th><th>Call Sign</th><th>Aksi</th> </thead><tbody id="employeeListTbody"></tbody></table></div>
+    </div></div>
+
+    <div class="footer-note"><i class="fas fa-cloud-upload-alt"></i> Klik sel untuk ubah manual | Sabtu/Minggu otomatis libur | Tombol Acak mengikuti komposisi: 2 FDSK, 1 ADM, 3 MSOS (Jumat: 1 MPP).</div>
+</div>
+
+<script>
+    // ======================= KONFIGURASI =======================
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0UXhXzFPRQBTl0VaDhh4Ak7bYd8fNy53ZavL4t6sXAbeRPiH8-IZ4o4QrXlZ6_0nA/exec";
+    
+    let schedules = [], reminders = [], employees = [];
+    let currentBatchDate = new Date();
+    let batchData = {};
+    let baseDate = new Date();
+    
+    // Tanggal libur nasional
+    const nationalHolidays = [
+        "2026-01-01", "2026-04-01", "2026-07-17", "2026-10-10", "2026-11-25",
+        "2027-01-01", "2027-04-01", "2027-07-17", "2027-10-10", "2027-11-25",
+        "2028-01-01", "2028-04-01", "2028-07-17", "2028-10-10", "2028-11-25",
+        "2029-01-01", "2029-04-01", "2029-07-17", "2029-10-10", "2029-11-25",
+        "2030-01-01", "2030-04-01", "2030-07-17", "2030-10-10", "2030-11-25"
+    ];
+    
+    function isNationalHoliday(dateStr) { return nationalHolidays.includes(dateStr); }
+    function isWeekend(year, month, day) { const d = new Date(year, month, day); return d.getDay() === 0 || d.getDay() === 6; }
+    function isHolidayOrWeekend(dateStr, year, month, day) { return isNationalHoliday(dateStr) || isWeekend(year, month, day); }
+    function getTodayLocal() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`; }
+    
+    // ======================= LOAD DATA =======================
+    async function loadFromGoogleSheet() {
+        try {
+            const res = await fetch(GOOGLE_SCRIPT_URL);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            schedules = (data.schedules || []).map(s => ({ date: s.date, person: s.person, role: s.role, task: s.task, status: s.status }));
+            reminders = (data.reminders || []).map(r => ({ date: r.date, description: r.description, pic: r.pic, notes: r.notes }));
+            employees = (data.employees || []).filter(e => e.active !== false).map(e => ({ name: e.name, role: e.role, callSign: e.callSign }));
+            if (employees.length === 0) {
+                employees = [
+                    { name: "Ristiawan", role: "Pelaksana", callSign: "OCD" },
+                    { name: "Hairania Tirsani", role: "Pelaksana", callSign: "KRL" },
+                    { name: "Idham Tamim Aldary", role: "Pelaksana", callSign: "FOK" },
+                    { name: "Mario Lodewijck", role: "Pelaksana", callSign: "STR" },
+                    { name: "Ricky Adi Kuswanto", role: "Pelaksana", callSign: "BBN" },
+                    { name: "Zaki Luthfillah", role: "Pelaksana", callSign: "MLZ" },
+                    { name: "Dayinta Rifka An-Nisa Agant", role: "Pelaksana", callSign: "DDM" }
+                ];
+            }
+            document.getElementById("onlineIndicator").innerHTML = '<i class="fas fa-circle"></i> ONLINE';
+            document.getElementById("onlineIndicator").className = "online-badge";
+            refreshAllUI();
+        } catch(err) {
+            console.error("Load error:", err);
+            document.getElementById("onlineIndicator").innerHTML = '<i class="fas fa-circle"></i> OFFLINE (Gagal ambil data)';
+            document.getElementById("onlineIndicator").className = "offline-badge";
+        }
+    }
+    
+    // ======================= KIRIM BATCH =======================
+    async function sendBatch(updates) {
+        if (updates.length === 0) { alert("Tidak ada perubahan."); return false; }
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "schedule_batch", updates })
+            });
+            alert(`✅ ${updates.length} jadwal berhasil dikirim. Refresh data...`);
+            setTimeout(() => loadFromGoogleSheet(), 1500);
+            return true;
+        } catch(err) {
+            console.error("Batch error:", err);
+            alert("❌ Gagal mengirim: " + err.message);
+            return false;
+        }
+    }
+    
+    // ======================= PICKER OPSI =======================
+    function showPicker(options, title, callback) {
+        const overlay = document.getElementById("pickerOverlay");
+        document.getElementById("pickerTitle").innerText = title;
+        const container = document.getElementById("pickerOptions");
+        container.innerHTML = "";
+        options.forEach(opt => {
+            const btn = document.createElement("button");
+            btn.innerText = opt === "" ? "Kosongkan" : opt;
+            btn.style.padding = "8px 16px";
+            btn.style.borderRadius = "40px";
+            btn.style.background = "#f1f5f9";
+            btn.style.border = "none";
+            btn.style.cursor = "pointer";
+            btn.onclick = () => {
+                overlay.style.display = "none";
+                callback(opt);
+            };
+            container.appendChild(btn);
+        });
+        overlay.style.display = "flex";
+        document.getElementById("pickerCancelBtn").onclick = () => {
+            overlay.style.display = "none";
+            callback(null);
+        };
+    }
+    
+    // ======================= RANDOMIZE =======================
+    function randomizeSchedule() {
+        const year = currentBatchDate.getFullYear();
+        const month = currentBatchDate.getMonth();
+        const daysInMonth = new Date(year, month+1, 0).getDate();
+        const regularEmployees = employees.filter(e => e.callSign !== "PLI" && e.callSign !== "PBC");
+        
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            
+            if (isHolidayOrWeekend(dateStr, year, month, d)) {
+                employees.forEach(emp => {
+                    batchData[`${emp.callSign}|${dateStr}`] = { task: "", status: "Libur" };
+                });
+                continue;
+            }
+            
+            const dayOfWeek = new Date(year, month, d).getDay();
+            let composition = (dayOfWeek === 5) 
+                ? ["FDSK", "FDSK", "ADM", "MSOS", "MSOS", "MPP"]
+                : ["FDSK", "FDSK", "ADM", "MSOS", "MSOS", "MSOS"];
+            
+            for (let i = composition.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [composition[i], composition[j]] = [composition[j], composition[i]];
+            }
+            
+            regularEmployees.forEach((emp, idx) => {
+                const key = `${emp.callSign}|${dateStr}`;
+                if (idx < composition.length) {
+                    batchData[key] = { task: composition[idx], status: "WFO" };
+                } else {
+                    batchData[key] = { task: "", status: "" };
+                }
+            });
+        }
+        renderScheduler();
+    }
+    
+    // ======================= RENDER SCHEDULER dengan REKAP (FIXED ATTENDANCE) =======================
+    function renderScheduler() {
+        const year = currentBatchDate.getFullYear();
+        const month = currentBatchDate.getMonth();
+        const daysInMonth = new Date(year, month+1, 0).getDate();
+        
+        // Hitung target ideal per posisi
+        let totalFDSKNeeded = 0, totalMSOSNeeded = 0, totalADMNeeded = 0, totalMPPNeeded = 0;
+        let totalWorkDays = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            if (!isHolidayOrWeekend(dateStr, year, month, d)) {
+                totalWorkDays++;
+                const dayOfWeek = new Date(year, month, d).getDay();
+                totalFDSKNeeded += 2;
+                totalADMNeeded += 1;
+                if (dayOfWeek === 5) {
+                    totalMSOSNeeded += 2;
+                    totalMPPNeeded += 1;
+                } else {
+                    totalMSOSNeeded += 3;
+                }
+            }
+        }
+        const regularCount = employees.filter(e => e.callSign !== "PLI" && e.callSign !== "PBC").length;
+        const idealFDSK = Math.ceil(totalFDSKNeeded / regularCount);
+        const idealMSOS = Math.ceil(totalMSOSNeeded / regularCount);
+        const idealADM = Math.ceil(totalADMNeeded / regularCount);
+        const idealMPP = totalMPPNeeded > 0 ? Math.ceil(totalMPPNeeded / regularCount) : 0;
+        const idealHariKerja = Math.ceil(totalWorkDays / regularCount);
+        
+        // Buat header tabel
+        let theadHtml = "<table><th>Nama / Tgl</th>";
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            let cls = "";
+            if (isNationalHoliday(dateStr)) cls = 'class="holiday-header"';
+            else if (isWeekend(year, month, d)) cls = 'class="weekend-header"';
+            theadHtml += `<th ${cls}>${d}</th>`;
+        }
+        theadHtml += `<th class="rekap-col">WFO</th><th class="rekap-col">MPP</th><th class="rekap-col">ST</th><th class="rekap-col">MSOS</th><th class="rekap-col">ADM</th><th class="rekap-col">FDSK</th><th class="rekap-col">TOTAL</th>`;
+        theadHtml += "</thead>";
+        document.getElementById("schedulerHead").innerHTML = theadHtml;
+        
+        const startDate = `${year}-${String(month+1).padStart(2,'0')}-01`;
+        const endDate = `${year}-${String(month+1).padStart(2,'0')}-${daysInMonth}`;
+        const schedulesThisMonth = schedules.filter(s => s.date >= startDate && s.date <= endDate);
+        
+        // Inisialisasi batchData untuk semua pegawai dan semua tanggal
+        employees.forEach(emp => {
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const key = `${emp.callSign}|${dateStr}`;
+                if (batchData[key] === undefined) {
+                    const existing = schedulesThisMonth.find(s => s.person === emp.callSign && s.date === dateStr);
+                    batchData[key] = existing ? { task: existing.task, status: existing.status } : { task: "", status: "" };
+                }
+                if (isHolidayOrWeekend(dateStr, year, month, d)) {
+                    batchData[key] = { task: "", status: "Libur" };
+                }
+            }
+        });
+        
+        let tbodyHtml = "";
+        let totalWfoAll=0, totalMppAll=0, totalStAll=0, totalMsosAll=0, totalAdmAll=0, totalFdskAll=0, totalHariAll=0;
+        
+        for (let emp of employees) {
+            let wfoCount=0, mppCount=0, stCount=0, msosCount=0, admCount=0, fdskCount=0, totalBertugas=0;
+            let rowHtml = `<tr><td class="sticky-col"><strong>${emp.callSign}</strong><br><small>${emp.name}</small></td>`;
+            
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const key = `${emp.callSign}|${dateStr}`;
+                const data = batchData[key] || { task: "", status: "" };
+                const isLibur = isHolidayOrWeekend(dateStr, year, month, d) || data.status === "Libur";
+                const displayTask = isLibur ? "—" : (data.task || "—");
+                const displayStatus = isLibur ? "Libur" : (data.status || "");
+                const statusIcon = displayStatus === "WFO" ? "🟢" : (displayStatus === "WFH" ? "🟡" : (displayStatus === "Cuti" ? "🔴" : (displayStatus === "ST" ? "🔵" : "")));
+                const holidayClass = isLibur ? 'holiday-cell' : '';
+                
+                // Update rekap hanya untuk hari kerja non-libur yang memiliki tugas
+                if (!isHolidayOrWeekend(dateStr, year, month, d) && data.status !== "Libur" && data.task && data.task !== "") {
+                    totalBertugas++;
+                    if (data.status === "WFO") wfoCount++;
+                    else if (data.status === "ST") stCount++;
+                    
+                    if (data.task === "FDSK") fdskCount++;
+                    else if (data.task === "MSOS") msosCount++;
+                    else if (data.task === "ADM") admCount++;
+                    else if (data.task === "MPP") mppCount++;
+                }
+                
+                rowHtml += `<td class="schedule-cell ${holidayClass}" data-person="${emp.callSign}" data-date="${dateStr}" data-holiday="${isLibur}">
+                                <strong>${displayTask}</strong><br><small>${displayStatus} ${statusIcon}</small>
+                            </td>`;
+            }
+            
+            const flagFDSK = fdskCount < idealFDSK ? 'flag-belum-ideal' : '';
+            const flagMSOS = msosCount < idealMSOS ? 'flag-belum-ideal' : '';
+            const flagADM = admCount < idealADM ? 'flag-belum-ideal' : '';
+            const flagMPP = (idealMPP > 0 && mppCount < idealMPP) ? 'flag-belum-ideal' : '';
+            const flagTotal = totalBertugas < idealHariKerja ? 'flag-belum-ideal' : '';
+            
+            rowHtml += `<td class="rekap-col">${wfoCount}</td>
+                        <td class="rekap-col ${flagMPP}">${mppCount}${idealMPP > 0 && mppCount < idealMPP ? ' ⚠️' : ''}</td>
+                        <td class="rekap-col">${stCount}</td>
+                        <td class="rekap-col ${flagMSOS}">${msosCount}${msosCount < idealMSOS ? ' ⚠️' : ''}</td>
+                        <td class="rekap-col ${flagADM}">${admCount}${admCount < idealADM ? ' ⚠️' : ''}</td>
+                        <td class="rekap-col ${flagFDSK}">${fdskCount}${fdskCount < idealFDSK ? ' ⚠️' : ''}</td>
+                        <td class="rekap-col ${flagTotal}">${totalBertugas}${totalBertugas < idealHariKerja ? ' ⚠️' : ''}</td>
+                        </tr>`;
+            tbodyHtml += rowHtml;
+            totalWfoAll += wfoCount; totalMppAll += mppCount; totalStAll += stCount;
+            totalMsosAll += msosCount; totalAdmAll += admCount; totalFdskAll += fdskCount;
+            totalHariAll += totalBertugas;
+        }
+        document.getElementById("schedulerBody").innerHTML = tbodyHtml;
+        
+        // FOOTER REKAP SELURUH TIM
+        let footHtml = `<tr class="tfoot-summary"><td><strong>🏆 TOTAL TIM</strong></td>`;
+        for(let i = 0; i < daysInMonth; i++) footHtml += `<td style="background:#f1f5f9;"></td>`;
+        const neededFDSK = totalFDSKNeeded, neededMSOS = totalMSOSNeeded, neededADM = totalADMNeeded, neededMPP = totalMPPNeeded;
+        const flagAllFDSK = totalFdskAll < neededFDSK ? 'flag-belum-ideal' : '';
+        const flagAllMSOS = totalMsosAll < neededMSOS ? 'flag-belum-ideal' : '';
+        const flagAllADM = totalAdmAll < neededADM ? 'flag-belum-ideal' : '';
+        const flagAllMPP = (neededMPP > 0 && totalMppAll < neededMPP) ? 'flag-belum-ideal' : '';
+        const totalHariIdeal = totalWorkDays * regularCount;
+        const flagAllHari = totalHariAll < totalHariIdeal ? 'flag-belum-ideal' : '';
+        footHtml += `<td class="rekap-col"><strong>${totalWfoAll}</strong></td>
+                     <td class="rekap-col ${flagAllMPP}"><strong>${totalMppAll}</strong> / ${neededMPP}${totalMppAll < neededMPP ? ' ⚠️' : ''}</td>
+                     <td class="rekap-col"><strong>${totalStAll}</strong></td>
+                     <td class="rekap-col ${flagAllMSOS}"><strong>${totalMsosAll}</strong> / ${neededMSOS}${totalMsosAll < neededMSOS ? ' ⚠️' : ''}</td>
+                     <td class="rekap-col ${flagAllADM}"><strong>${totalAdmAll}</strong> / ${neededADM}${totalAdmAll < neededADM ? ' ⚠️' : ''}</td>
+                     <td class="rekap-col ${flagAllFDSK}"><strong>${totalFdskAll}</strong> / ${neededFDSK}${totalFdskAll < neededFDSK ? ' ⚠️' : ''}</td>
+                     <td class="rekap-col ${flagAllHari}"><strong>${totalHariAll}</strong> / ${totalHariIdeal}${totalHariAll < totalHariIdeal ? ' ⚠️' : ''}</td>
+                     </tr>`;
+        document.getElementById("schedulerFoot").innerHTML = footHtml;
+        
+        // ======================= ATTENDANCE ROW - DIPERBAIKI =======================
+        let attendanceHtml = `<table><thead><tr><th>Tanggal</th>`;
+        for (let d = 1; d <= daysInMonth; d++) {
+            attendanceHtml += `<th>${d}</th>`;
+        }
+        attendanceHtml += `</tr></thead><tbody><tr><th>Kehadiran WFO</th>`;
+        
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            
+            // CEK LIBUR NASIONAL ATAU WEEKEND
+            if (isHolidayOrWeekend(dateStr, year, month, d)) {
+                attendanceHtml += `<td style="background:#e2e3e5; text-align:center;">Libur</td>`;
+                continue;
+            }
+            
+            // HITUNG HANYA UNTUK HARI KERJA
+            let hadir = 0;
+            let wfo = 0;
+            
+            for (let emp of employees) {
+                const key = `${emp.callSign}|${dateStr}`;
+                const data = batchData[key];
+                // Seseorang dianggap HADIR jika memiliki task dan status bukan "Libur"
+                if (data && data.task && data.task !== "" && data.status !== "Libur") {
+                    hadir++;
+                    if (data.status === "WFO") {
+                        wfo++;
+                    }
+                }
+            }
+            
+            let percentDisplay = "";
+            let cellClass = "";
+            
+            if (hadir === 0) {
+                percentDisplay = "0%";
+                cellClass = "attendance-low";
+            } else {
+                const percent = Math.round((wfo / hadir) * 100);
+                percentDisplay = `${percent}%`;
+                if (percent < 50) {
+                    cellClass = "attendance-low";
+                }
+                percentDisplay += `<br><small>(${wfo}/${hadir})</small>`;
+            }
+            
+            attendanceHtml += `<td class="${cellClass}" style="text-align:center;">${percentDisplay}</td>`;
+        }
+        
+        attendanceHtml += `</tr></tbody>`;
+        document.getElementById("attendanceRow").innerHTML = attendanceHtml;
+        
+        // Event listener klik cell
+        document.querySelectorAll("#schedulerBody td.schedule-cell").forEach(cell => {
+            const isLibur = cell.dataset.holiday === "true";
+            if (isLibur) {
+                cell.style.cursor = "not-allowed";
+                return;
+            }
+            const newCell = cell.cloneNode(true);
+            cell.parentNode.replaceChild(newCell, cell);
+            newCell.addEventListener("click", (e) => {
+                const person = newCell.dataset.person;
+                const date = newCell.dataset.date;
+                const key = `${person}|${date}`;
+                const current = batchData[key] || { task: "", status: "" };
+                showPicker(["FDSK","MSOS","ADM","MPP",""], `Tugas untuk ${person} ${date}`, (task) => {
+                    if (task === undefined) return;
+                    if (task === "") {
+                        batchData[key] = { task: "", status: "" };
+                        renderScheduler();
+                        return;
+                    }
+                    showPicker(["WFO","WFH","Cuti","ST"], `Status untuk ${person} ${date}`, (status) => {
+                        if (status) {
+                            batchData[key] = { task, status };
+                            renderScheduler();
+                        }
+                    });
+                });
+            });
+        });
+        
+        document.getElementById("currentMonthYear").innerText = `${currentBatchDate.toLocaleString('id-ID', { month: 'long' })} ${year}`;
+    }
+    
+    // ======================= COPY KE EXCEL =======================
+    function copyTableToExcel() {
+        const table = document.getElementById("schedulerTable");
+        if (!table) return;
+        const cloneTable = table.cloneNode(true);
+        cloneTable.querySelectorAll('.schedule-cell').forEach(cell => {
+            const strong = cell.querySelector('strong');
+            const small = cell.querySelector('small');
+            let taskText = strong ? strong.innerText : '';
+            let statusText = small ? small.innerText : '';
+            cell.innerText = `${taskText} ${statusText}`.trim();
+        });
+        const htmlContent = `<html><head><meta charset="UTF-8"><title>Jadwal Bulanan ${currentBatchDate.toLocaleString('id-ID', { month: 'long' })} ${currentBatchDate.getFullYear()}</title><style>th,td{border:1px solid #000;padding:4px 6px;text-align:center;vertical-align:middle;}th{background:#f1f5f9;font-weight:bold;}</style></head><body>${cloneTable.outerHTML}<p><em>Generated from Sub Dashboard Tim Operasional</em></p></body></html>`;
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const data = [new ClipboardItem({ [blob.type]: blob })];
+        navigator.clipboard.write(data).then(() => alert("✅ Tabel berhasil disalin!\n\nPaste langsung ke Microsoft Excel (Ctrl+V) dan tabel akan terbentuk rapi.")).catch(() => alert("❌ Gagal menyalin. Silakan copy manual dengan seleksi tabel."));
+    }
+    
+    async function saveBatchChanges() {
+        const updates = [];
+        for (let [key, val] of Object.entries(batchData)) {
+            if (val.task && val.status && val.status !== "Libur") {
+                const [person, date] = key.split("|");
+                let role = employees.find(e => e.callSign === person)?.role || "Pelaksana";
+                updates.push({ date, person, role, task: val.task, status: val.status });
+            }
+        }
+        if (updates.length === 0) { alert("Tidak ada jadwal yang diisi."); return; }
+        await sendBatch(updates);
+        document.getElementById("schedulerModal").style.display = "none";
+    }
+    
+    // ======================= TRIPLE CALENDAR =======================
+    function getEventsByDate(dateStr) { return reminders.filter(r => r.date === dateStr); }
+    function renderTripleCalendar() {
+        const year = baseDate.getFullYear();
+        const month = baseDate.getMonth();
+        const monthsData = [
+            { date: new Date(year, month-1, 1) },
+            { date: new Date(year, month, 1) },
+            { date: new Date(year, month+1, 1) }
+        ];
+        let html = "";
+        const todayStr = getTodayLocal();
+        for (let mi of monthsData) {
+            const y = mi.date.getFullYear();
+            const m = mi.date.getMonth();
+            const monthName = mi.date.toLocaleString('id-ID', { month: 'long' });
+            const daysInMonth = new Date(y, m+1, 0).getDate();
+            const firstDay = new Date(y, m, 1).getDay();
+            let days = Array(firstDay).fill(null);
+            for (let d = 1; d <= daysInMonth; d++) days.push(d);
+            let daysHtml = "";
+            for (let i = 0; i < days.length; i++) {
+                const dayNum = days[i];
+                if (dayNum === null) {
+                    daysHtml += `<div class="day-cell"></div>`;
+                } else {
+                    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+                    const hasEvent = getEventsByDate(dateStr).length > 0;
+                    const isToday = dateStr === todayStr;
+                    const isHoliday = isNationalHoliday(dateStr);
+                    const isWeekendDay = isWeekend(y, m, dayNum);
+                    let cls = "day-cell";
+                    if (isToday) cls += " today";
+                    if (isHoliday) cls += " holiday";
+                    if (hasEvent && !isToday && !isHoliday) cls += " has-event";
+                    if (isWeekendDay) cls += " weekend";
+                    daysHtml += `<div class="${cls}" data-date="${dateStr}"><div>${dayNum}</div><div class="event-dot">${hasEvent ? '●' : ''}</div></div>`;
+                }
+            }
+            html += `<div class="month-card"><div class="month-header">${monthName} ${y}</div><div class="weekdays"><span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span></div><div class="days-grid">${daysHtml}</div></div>`;
+        }
+        document.getElementById("tripleCalendarContainer").innerHTML = html;
+        document.querySelectorAll('.day-cell[data-date]').forEach(el => {
+            el.addEventListener('click', () => {
+                const date = el.dataset.date;
+                const [y, m, d] = date.split('-').map(Number);
+                if (isNationalHoliday(date) || isWeekend(y, m-1, d)) {
+                    alert("Tanggal merah atau weekend, tidak bisa menambah kegiatan.");
+                    return;
+                }
+                const userInput = prompt(`📅 ${date}\nTambah kegiatan baru:`, "Rapat");
+                if (userInput) {
+                    const pic = prompt("PIC:", "Tim");
+                    const notes = prompt("Catatan:", "");
+                    fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ type: "reminder", date, activity: userInput, pic: pic || "Tim", notes: notes || "" })
+                    }).then(() => setTimeout(() => loadFromGoogleSheet(), 1000));
+                }
+            });
+        });
+    }
+    
+    function changeTripleMonth(delta) {
+        let nd = new Date(baseDate);
+        nd.setMonth(baseDate.getMonth() + delta);
+        if (nd.getFullYear() < 2026) nd = new Date(2026, 0, 1);
+        if (nd.getFullYear() > 2030) nd = new Date(2030, 11, 1);
+        baseDate = nd;
+        document.getElementById("yearTripleSelect").value = baseDate.getFullYear();
+        renderTripleCalendar();
+    }
+    function setTripleYear(y) {
+        let ny = parseInt(y);
+        if (ny < 2026) ny = 2026;
+        if (ny > 2030) ny = 2030;
+        baseDate = new Date(ny, baseDate.getMonth(), 1);
+        renderTripleCalendar();
+    }
+    
+    // ======================= EXPORT JADWAL 2 MINGGU =======================
+    async function generateFortnightSchedule() {
+        const month = parseInt(document.getElementById("exportMonthSelect").value);
+        const year = parseInt(document.getElementById("exportYearInput").value);
+        const weekOption = parseInt(document.getElementById("exportWeekSelect").value);
+        
+        let startDay = 1;
+        let endDay = 14;
+        if (weekOption === 2) {
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            startDay = 15;
+            endDay = daysInMonth;
+        }
+        
+        const startDate = `${year}-${String(month+1).padStart(2,'0')}-${String(startDay).padStart(2,'0')}`;
+        const endDate = `${year}-${String(month+1).padStart(2,'0')}-${String(endDay).padStart(2,'0')}`;
+        
+        const fortnightSchedules = schedules.filter(s => s.date >= startDate && s.date <= endDate);
+        const filteredEmployees = employees.filter(emp => emp.callSign !== "PLI" && emp.callSign !== "PBC");
+        
+        const employeeTasks = new Map();
+        filteredEmployees.forEach(emp => {
+            employeeTasks.set(emp.callSign, { 
+                fdskDates: [], 
+                msosDates: [], 
+                name: emp.name,
+                callSign: emp.callSign 
+            });
+        });
+        
+        fortnightSchedules.forEach(s => {
+            const empData = employeeTasks.get(s.person);
+            if (!empData) return;
+            const dayNum = parseInt(s.date.split('-')[2]);
+            if (s.task === "FDSK") empData.fdskDates.push(dayNum);
+            else if (s.task === "MSOS") empData.msosDates.push(dayNum);
+        });
+        
+        for (let [_, data] of employeeTasks) {
+            data.fdskDates.sort((a,b) => a-b);
+            data.msosDates.sort((a,b) => a-b);
+        }
+        
+        let tableHtml = `<table style="width:100%; border-collapse:collapse; font-family:'Inter', sans-serif; font-size:13px;" border="1" cellpadding="8" cellspacing="0"><thead><tr style="background-color:#f1f5f9;"><th style="border:1px solid #cbd5e1; padding:8px; text-align:center;">No</th><th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Nama Petugas</th><th style="border:1px solid #cbd5e1; padding:8px; text-align:center;">Kode Petugas</th><th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Loket Layanan Informasi (FDSK)</th><th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Media Sosial (MSOS)</th></tr></thead><tbody>`;
+        
+        let no = 1;
+        for (let [callSign, data] of employeeTasks) {
+            const fdskStr = data.fdskDates.length > 0 ? data.fdskDates.join(', ') : '-';
+            const msosStr = data.msosDates.length > 0 ? data.msosDates.join(', ') : '-';
+            tableHtml += `<tr><td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${no++}</td><td style="border:1px solid #cbd5e1; padding:8px;">${data.name}</td><td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${callSign}</td><td style="border:1px solid #cbd5e1; padding:8px;">${fdskStr}</td><td style="border:1px solid #cbd5e1; padding:8px;">${msosStr}</td></tr>`;
+        }
+        
+        tableHtml += `</tbody></table><p style="margin-top:16px; font-size:12px; color:#6c757d; text-align:center;">Periode: ${startDate} s.d. ${endDate} | FDSK = Loket Layanan Informasi, MSOS = Media Sosial (angka = tanggal bertugas)</p>`;
+        
+        document.getElementById("exportFortnightResult").innerHTML = tableHtml;
+        document.getElementById("copyFortnightTableBtn").disabled = false;
+        window.currentFortnightHTML = tableHtml;
+    }
+    
+    function copyFortnightTableToClipboard() {
+        if (!window.currentFortnightHTML) {
+            alert("Tidak ada data. Silakan klik Tampilkan terlebih dahulu.");
+            return;
+        }
+        const htmlToCopy = `<html><head><meta charset="UTF-8"><style>table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;}th,td{border:1px solid #000;padding:8px;vertical-align:top;}th{background:#f1f5f9;font-weight:bold;text-align:center;}td{text-align:left;}</style></head><body>${window.currentFortnightHTML}</body></html>`;
+        const blob = new Blob([htmlToCopy], { type: 'text/html' });
+        const data = [new ClipboardItem({ [blob.type]: blob })];
+        navigator.clipboard.write(data).then(() => alert("✅ Tabel berhasil disalin!\n\nPaste langsung ke Microsoft Word (Ctrl+V)")).catch(() => alert("❌ Gagal menyalin."));
+    }
+    
+    // ======================= MANAJEMEN PEGAWAI =======================
+    async function addEmployee() {
+        const name = document.getElementById("empName").value.trim();
+        const role = document.getElementById("empRole").value.trim();
+        const callSign = document.getElementById("empCallSign").value.trim();
+        if (!name || !role || !callSign) { alert("Isi semua field"); return; }
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "employee_add", name, role, callSign, active: true })
+        });
+        alert("Pegawai ditambahkan, refresh...");
+        loadFromGoogleSheet();
+        document.getElementById("empName").value = "";
+        document.getElementById("empRole").value = "";
+        document.getElementById("empCallSign").value = "";
+    }
+    async function deleteEmployee(callSign) {
+        if (!confirm(`Hapus ${callSign}?`)) return;
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "employee_delete", callSign })
+        });
+        loadFromGoogleSheet();
+    }
+    function renderEmployeeList() {
+        const tbody = document.getElementById("employeeListTbody");
+        tbody.innerHTML = "";
+        employees.forEach(emp => {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = emp.name;
+            row.insertCell(1).innerText = emp.role;
+            row.insertCell(2).innerText = emp.callSign;
+            const btn = document.createElement("button");
+            btn.innerText = "Hapus";
+            btn.style.background = "#ef4444";
+            btn.style.color = "white";
+            btn.style.borderRadius = "40px";
+            btn.style.padding = "4px 12px";
+            btn.onclick = () => deleteEmployee(emp.callSign);
+            row.insertCell(3).appendChild(btn);
+        });
+    }
+    
+    // ======================= REFRESH UI UTAMA =======================
+    function refreshAllUI() {
+        const today = getTodayLocal();
+        const sdmMap = new Map();
+        schedules.filter(s => s.date === today).forEach(s => sdmMap.set(s.person, { task: s.task, status: s.status }));
+        
+        let totalWFO = 0;
+        let squadHtml = "";
+        employees.forEach((emp, idx) => {
+            const assign = sdmMap.get(emp.callSign);
+            let statusText = "Tidak bertugas", statusClass = "status-none", posisi = emp.role;
+            if (assign) {
+                statusText = assign.status;
+                if (statusText === "WFO") totalWFO++;
+                if (assign.task) posisi = assign.task;
+                if (assign.status === "WFO") statusClass = "status-wfo";
+                else if (assign.status === "WFH") statusClass = "status-wfh";
+                else if (assign.status === "Cuti") statusClass = "status-cuti";
+                else if (assign.status === "ST") statusClass = "status-st";
+            }
+            squadHtml += `<tr><td>${idx+1}</td><td><strong>${emp.callSign}</strong><br><small>${emp.name}</small></td><td>${posisi}</td><td><span class="status-badge ${statusClass}">${statusText}</span></td></tr>`;
+        });
+        document.getElementById("squadTbody").innerHTML = squadHtml;
+        document.getElementById("todaySquadCount").innerText = totalWFO;
+        document.getElementById("squadStatusText").innerHTML = totalWFO === employees.length ? "Full Squad! 🎉" : `${totalWFO} personel WFO hari ini`;
+        
+        const todayEvents = reminders.filter(r => r.date === today);
+        document.getElementById("todayEventsCount").innerText = todayEvents.length;
+        document.getElementById("todayEventList").innerHTML = todayEvents.length ? todayEvents.map(e => `• ${e.description} (${e.pic})`).join('<br>') : "<i>Tidak ada kegiatan</i>";
+        
+        const threeDaysLater = new Date();
+        threeDaysLater.setDate(threeDaysLater.getDate() + 3);
+        const threeDaysStr = threeDaysLater.toISOString().slice(0,10);
+        const dueEvents = reminders.filter(r => r.date >= today && r.date <= threeDaysStr);
+        document.getElementById("dueCount").innerText = dueEvents.length;
+        document.getElementById("dueEventList").innerHTML = dueEvents.length ? dueEvents.map(e => `• ${e.date.substring(5)}: ${e.description} (${e.pic})`).join('<br>') : "<i>Tidak ada due date</i>";
+        
+        const eventBody = document.getElementById("eventTbody");
+        if (todayEvents.length === 0) eventBody.innerHTML = `<tr><td colspan="4">🌸 Tidak ada acara</td></tr>`;
+        else eventBody.innerHTML = todayEvents.map((ev, i) => `<tr><td>${i+1}</td><td>${ev.description}</td><td>👤 ${ev.pic}</td><td>${ev.notes || '-'}</td></tr>`).join('');
+        
+        let msg = todayEvents.length ? "Semangat tim menyala!" : "Hari tanpa kegiatan, isi persiapan~";
+        if (dueEvents.length > 0) msg += " Ada deadline!";
+        document.getElementById("magicMessage").innerHTML = msg;
+        
+        renderTripleCalendar();
+    }
+    
+    // ======================= EVENT LISTENER =======================
+    document.getElementById("manualRefreshBtn").onclick = () => loadFromGoogleSheet();
+    document.getElementById("openSchedulerBtn").onclick = () => {
+        batchData = {};
+        renderScheduler();
+        document.getElementById("schedulerModal").style.display = "block";
+    };
+    document.getElementById("closeModalBtn").onclick = () => document.getElementById("schedulerModal").style.display = "none";
+    document.getElementById("saveBatchBtn").onclick = saveBatchChanges;
+    document.getElementById("randomizeBtn").onclick = () => { if (confirm("Acak jadwal akan menimpa semua jadwal yang ada di bulan ini. Lanjutkan?")) randomizeSchedule(); };
+    document.getElementById("copyTableToExcelBtn").onclick = () => copyTableToExcel();
+    document.getElementById("prevMonthBatch").onclick = () => { currentBatchDate.setMonth(currentBatchDate.getMonth() - 1); batchData = {}; renderScheduler(); };
+    document.getElementById("nextMonthBatch").onclick = () => { currentBatchDate.setMonth(currentBatchDate.getMonth() + 1); batchData = {}; renderScheduler(); };
+    document.getElementById("prevTripleBtn").onclick = () => changeTripleMonth(-1);
+    document.getElementById("nextTripleBtn").onclick = () => changeTripleMonth(1);
+    document.getElementById("yearTripleSelect").onchange = (e) => setTripleYear(e.target.value);
+    document.getElementById("openEmployeeBtn").onclick = () => { renderEmployeeList(); document.getElementById("employeeModal").style.display = "block"; };
+    document.getElementById("closeEmployeeBtn").onclick = () => document.getElementById("employeeModal").style.display = "none";
+    document.getElementById("addEmployeeBtn").onclick = addEmployee;
+    document.getElementById("exportFortnightBtn").onclick = () => { document.getElementById("exportFortnightModal").style.display = "block"; };
+    document.getElementById("closeExportFortnightBtn").onclick = () => { document.getElementById("exportFortnightModal").style.display = "none"; };
+    document.getElementById("doExportFortnightBtn").onclick = () => { generateFortnightSchedule(); };
+    document.getElementById("copyFortnightTableBtn").onclick = () => { copyFortnightTableToClipboard(); };
+    document.getElementById("backToIndexBtn").onclick = () => { window.location.href = '../index.html'; };
+    
+    window.onclick = (e) => {
+        if (e.target.classList.contains("modal")) e.target.style.display = "none";
+        if (e.target.id === "pickerOverlay") document.getElementById("pickerOverlay").style.display = "none";
+    };
+    
+    // ======================= INIT =======================
+    baseDate = new Date();
+    if (baseDate.getFullYear() < 2026) baseDate = new Date(2026, 0, 1);
+    if (baseDate.getFullYear() > 2030) baseDate = new Date(2030, 0, 1);
+    document.getElementById("yearTripleSelect").value = baseDate.getFullYear();
+    loadFromGoogleSheet();
+</script>
+</body>
+</html>

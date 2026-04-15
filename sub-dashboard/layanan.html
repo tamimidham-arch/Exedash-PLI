@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layanan Informasi - Sub Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+        .dashboard-container { max-width: 1400px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .back-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .back-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .status-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 11px; }
+        .status-badge.online { background: #28a745; }
+        .status-badge.offline { background: #dc3545; }
+        
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
+        .kpi-card { background: white; border-radius: 15px; padding: 20px; display: flex; align-items: center; gap: 15px; border-left: 4px solid; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: transform 0.2s; cursor: pointer; }
+        .kpi-card:hover { transform: translateX(5px); }
+        .kpi-value { font-size: 28px; font-weight: bold; color: #1e3c72; }
+        .kpi-label { font-size: 12px; color: #6c757d; margin-top: 5px; }
+        .kpi-small { font-size: 10px; color: #6c757d; margin-top: 3px; }
+        .trend-up { color: #28a745; }
+        .trend-down { color: #dc3545; }
+        .trend-stable { color: #ffc107; }
+        
+        .card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-3px); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #e9ecef; padding-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+        .card-header h3 { font-size: 16px; color: #1e3c72; display: flex; align-items: center; gap: 8px; }
+        
+        .map-container { 
+            background: white; 
+            border-radius: 15px; 
+            padding: 20px; 
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        #map { 
+            height: 500px; 
+            border-radius: 12px; 
+            z-index: 1;
+            background: #f8f9fa;
+        }
+        .month-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .month-selector select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        .month-selector button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background: #1e3c72;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .month-selector button:hover {
+            background: #2a5298;
+            transform: translateY(-2px);
+        }
+        .map-legend {
+            margin-top: 10px;
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-marker.small { width: 12px; height: 12px; background: #28a745; border-radius: 50%; }
+        .legend-marker.medium { width: 20px; height: 20px; background: #ffc107; border-radius: 50%; }
+        .legend-marker.large { width: 32px; height: 32px; background: #dc3545; border-radius: 50%; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #e9ecef; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .loader { text-align: center; padding: 40px; color: #6c757d; }
+        .loader i { font-size: 40px; margin-bottom: 10px; display: block; }
+        
+        @media (max-width: 800px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+        
+        .channel-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            justify-content: center;
+        }
+        .channel-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 12px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .channel-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+        .channel-legend-item i {
+            font-size: 14px;
+        }
+        
+        .whatsapp-color { background-color: #25D366; }
+        .frontdesk-color { background-color: #DC3545; }
+        .facebook-color { background-color: #1877F2; }
+        .hotline-color { background-color: #212529; }
+        .email-color { background-color: #6C757D; }
+        .instagram-color { background-color: #E4405F; }
+        .website-color { background-color: #17A2B8; }
+        
+        .row-charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .insight-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #1e3c72;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .insight-card h4 {
+            color: #1e3c72;
+            margin-bottom: 12px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .insight-card p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        .insight-highlight {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-weight: 500;
+            color: #1e3c72;
+        }
+        
+        @media (max-width: 800px) {
+            .row-charts {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .category-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .category-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            padding: 4px 8px;
+            background: white;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .category-legend-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .category-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <div>
+                <h1><i class="fas fa-headset"></i> Layanan Informasi</h1>
+                <p>Manajemen Risiko & Kualitas Layanan</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <span id="data-status" class="status-badge">Memuat...</span>
+                <button class="back-btn" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-left"></i> Kembali</button>
+            </div>
+        </div>
+        
+        <div id="dashboard-content">
+            <div class="loader"><i class="fas fa-spinner fa-pulse"></i> Memuat data dari server...</div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbywHucFlh5aJAPbVMUWGA_REGi9lrax2IjYMbPtHJoMTIYqIriHeRFnjygQMbICNJphhg/exec';
+        
+        let dataLayanan = [];
+        let ytdAvgTime = '--:--:--';
+        let totalLayananYTD = 0;
+        let totalLayananBulanan = 0;
+        let trenPerubahan = '';
+        let channelData = [];
+        let channelConfig = [];
+        let dataDampak = [];
+        let dataAduan = [];
+        let dataKategoriLayanan = [];
+        let kategoriHeaders = [];
+        let kategoriBulanData = [];
+        let useDemo = false;
+        let map = null;
+        let currentMarkers = [];
+        let isMapInitialized = false;
+        let channelChart = null;
+        let impactChart = null;
+        let kategoriChart = null;
+        
+        const dampakLabels = [
+            'Dampak Kualitas Layanan & SLA',
+            'Dampak Kepatuhan & Regulasi',
+            'Pengawasan & Penegakan Hukum',
+            'Dampak Hubungan Pemangku Kepentingan',
+            'Dampak SDM & Proses Internal',
+            'Perlu Review Manual/Tidak terkait pada MR',
+            'Dampak Reputasi & Persepsi Publik'
+        ];
+        
+        const dampakColors = [
+            '#dc3545', '#ffc107', '#17a2b8', '#28a745', '#6c757d', '#fd7e14', '#9c27b0'
+        ];
+        
+        const DampakColumnMapping = {
+            bulan: 1,
+            tahun: 2,
+            kualitas: 3,
+            kepatuhan: 4,
+            pengawasan: 5,
+            stakeholder: 6,
+            sdm: 7,
+            review_manual: 8,
+            reputasi: 9
+        };
+        
+        function getChannelStyle(channelName) {
+            const name = channelName.toLowerCase();
+            if (name.includes('whatsapp') || name.includes('wa')) {
+                return { color: '#25D366', icon: 'fab fa-whatsapp' };
+            } else if (name.includes('front') || name.includes('desk')) {
+                return { color: '#DC3545', icon: 'fas fa-user-tie' };
+            } else if (name.includes('facebook') || name.includes('fb')) {
+                return { color: '#1877F2', icon: 'fab fa-facebook' };
+            } else if (name.includes('hotline') || name.includes('call') || name.includes('telepon')) {
+                return { color: '#212529', icon: 'fas fa-phone-alt' };
+            } else if (name.includes('email') || name.includes('mail')) {
+                return { color: '#6C757D', icon: 'fas fa-envelope' };
+            } else if (name.includes('instagram') || name.includes('ig')) {
+                return { color: '#E4405F', icon: 'fab fa-instagram' };
+            } else if (name.includes('website') || name.includes('web')) {
+                return { color: '#17A2B8', icon: 'fas fa-globe' };
+            } else {
+                return { color: '#6c757d', icon: 'fas fa-chart-line' };
+            }
+        }
+        
+        function getChannelHeaders(rawData) {
+            if (!rawData || rawData.length === 0) return [];
+            const headerRow = rawData[0];
+            if (!headerRow) return [];
+            const channels = [];
+            for (let col = 3; col <= 9 && col < headerRow.length; col++) {
+                let channelName = headerRow[col] ? headerRow[col].toString().trim() : `Channel ${String.fromCharCode(65 + col)}`;
+                if (channelName === '') channelName = `Channel ${String.fromCharCode(65 + col)}`;
+                channels.push(channelName);
+            }
+            return channels;
+        }
+        
+        function getTimeFromCells(rawData) {
+            if (!rawData || rawData.length <= 13) return null;
+            const row14 = rawData[13];
+            let jam = row14 && row14.length > 4 ? row14[4] : null;
+            let menit = row14 && row14.length > 5 ? row14[5] : null;
+            let detik = row14 && row14.length > 6 ? row14[6] : null;
+            if (jam === null || menit === null || detik === null) return null;
+            
+            jam = jam.toString().trim();
+            menit = menit.toString().trim();
+            detik = detik.toString().trim();
+            
+            let jamNum = parseInt(jam) || 0;
+            let menitNum = parseInt(menit) || 0;
+            let detikNum = parseInt(detik) || 0;
+            
+            return `${jamNum.toString().padStart(2,'0')}:${menitNum.toString().padStart(2,'0')}:${detikNum.toString().padStart(2,'0')}`;
+        }
+        
+        function getChannelData(rawData) {
+            if (!rawData || rawData.length === 0) {
+                return { ytdTotal: 0, monthlyTotal: 0, trend: '', channelSeries: [], channelNames: [] };
+            }
+            
+            let ytdTotal = 0, monthlyTotal = 0, trend = '';
+            let channelSeries = [];
+            let channelNames = getChannelHeaders(rawData);
+            
+            if (rawData.length > 13) {
+                const row14 = rawData[13];
+                if (row14 && row14.length > 10) {
+                    ytdTotal = parseInt(row14[10]?.toString().replace(/[^0-9]/g, '')) || 0;
+                }
+            }
+            if (rawData.length > 14) {
+                const row15 = rawData[14];
+                if (row15 && row15.length > 10) {
+                    monthlyTotal = parseInt(row15[10]?.toString().replace(/[^0-9]/g, '')) || 0;
+                }
+            }
+            if (rawData.length > 16) {
+                const row17 = rawData[16];
+                if (row17 && row17.length > 10) {
+                    trend = row17[10]?.toString().trim() || '';
+                }
+            }
+            
+            const bulanNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            
+            for (let i = 1; i <= 12 && i < rawData.length; i++) {
+                const row = rawData[i];
+                if (row && row.length > 9) {
+                    const bulan = row[0] ? row[0].toString().trim() : bulanNames[i-1];
+                    const tahun = row[1] ? row[1].toString().trim() : '2026';
+                    const channelValues = [];
+                    for (let col = 3; col <= 9 && col < row.length; col++) {
+                        let value = 0;
+                        const rawValue = row[col];
+                        if (rawValue && rawValue.toString().trim() !== '') {
+                            value = parseInt(rawValue.toString().replace(/[^0-9]/g, '')) || 0;
+                        }
+                        channelValues.push(value);
+                    }
+                    channelSeries.push({ bulan, tahun, values: channelValues });
+                }
+            }
+            
+            return { ytdTotal, monthlyTotal, trend, channelSeries, channelNames };
+        }
+        
+        function parseKategoriData(rawData) {
+            if (!rawData || rawData.length < 2) return { headers: [], bulanData: [] };
+            
+            const headers = [];
+            const bulanData = [];
+            
+            const headerRow = rawData[0];
+            if (headerRow && headerRow.length > 2) {
+                for (let i = 2; i <= 13 && i < headerRow.length; i++) {
+                    headers.push(headerRow[i] ? headerRow[i].toString().trim() : `Bulan ${i-1}`);
+                }
+            }
+            
+            for (let i = 1; i < rawData.length; i++) {
+                const row = rawData[i];
+                if (!row || row.length < 3) continue;
+                
+                const kategoriNama = row[1] ? row[1].toString().trim() : '';
+                if (kategoriNama === '' || kategoriNama === 'TOTAL') continue;
+                
+                const values = [];
+                for (let j = 2; j <= 13 && j < row.length; j++) {
+                    let val = 0;
+                    if (row[j] && row[j].toString().trim() !== '') {
+                        val = parseInt(row[j].toString().replace(/[^0-9]/g, '')) || 0;
+                    }
+                    values.push(val);
+                }
+                
+                const total = values.reduce((a, b) => a + b, 0);
+                if (total > 0) {
+                    bulanData.push({
+                        nama: kategoriNama,
+                        values: values,
+                        total: total
+                    });
+                }
+            }
+            
+            bulanData.sort((a, b) => b.total - a.total);
+            
+            return { headers, bulanData };
+        }
+        
+        function parseDampakData(rawData) {
+            if (!rawData || rawData.length < 2) return [];
+            
+            const result = [];
+            
+            // Cari index kolom berdasarkan header (baris pertama)
+            const headers = rawData[0];
+            let bulanIndex = -1;
+            let tahunIndex = -1;
+            let totalKerugianIndex = -1;
+            let kualitasIndex = DampakColumnMapping.kualitas;
+            let kepatuhanIndex = DampakColumnMapping.kepatuhan;
+            let pengawasanIndex = DampakColumnMapping.pengawasan;
+            let stakeholderIndex = DampakColumnMapping.stakeholder;
+            let sdmIndex = DampakColumnMapping.sdm;
+            let reviewManualIndex = DampakColumnMapping.review_manual;
+            let reputasiIndex = DampakColumnMapping.reputasi;
+            
+            // Cari index kolom berdasarkan header yang lebih akurat
+            if (headers && headers.length > 0) {
+                for (let i = 0; i < headers.length; i++) {
+                    const header = headers[i] ? headers[i].toString().trim() : '';
+                    if (header === 'Bulan' || header === 'bulan') bulanIndex = i;
+                    if (header === 'Tahun' || header === 'tahun') tahunIndex = i;
+                    if (header === 'Total_Kerugian_Terhindar' || header === 'Total Kerugian Terhindar') {
+                        totalKerugianIndex = i;
+                    }
+                    if (header === 'Kualitas_Layanan' || header === 'Kualitas Layanan') kualitasIndex = i;
+                    if (header === 'Kepatuhan' || header === 'Kepatuhan_Regulasi') kepatuhanIndex = i;
+                    if (header === 'Pengawasan' || header === 'Pengawasan_Penegakan') pengawasanIndex = i;
+                    if (header === 'Stakeholder' || header === 'Hubungan_Stakeholder') stakeholderIndex = i;
+                    if (header === 'SDM' || header === 'SDM_Internal') sdmIndex = i;
+                    if (header === 'Review_Manual' || header === 'Review Manual') reviewManualIndex = i;
+                    if (header === 'Reputasi' || header === 'Reputasi_Publik') reputasiIndex = i;
+                }
+            }
+            
+            // Jika tidak ditemukan header, gunakan mapping default
+            if (bulanIndex === -1) bulanIndex = DampakColumnMapping.bulan;
+            if (tahunIndex === -1) tahunIndex = DampakColumnMapping.tahun;
+            
+            for (let i = 1; i < rawData.length; i++) {
+                const row = rawData[i];
+                if (!row || row.length < 3) continue;
+                
+                const bulan = row[bulanIndex] ? row[bulanIndex].toString().trim() : '';
+                const tahun = row[tahunIndex] ? row[tahunIndex].toString().trim() : '';
+                
+                if (bulan === '' || bulan === 'Total' || bulan === 'TOTAL') continue;
+                
+                // Ambil nilai Total_Kerugian_Terhindar dari kolom yang ditemukan
+                let totalKerugian = 0;
+                if (totalKerugianIndex !== -1 && row[totalKerugianIndex]) {
+                    // Hapus karakter non-digit (seperti Rp, spasi, titik, koma)
+                    const kerugianStr = row[totalKerugianIndex].toString().replace(/[^0-9]/g, '');
+                    totalKerugian = parseInt(kerugianStr) || 0;
+                }
+                
+                result.push({
+                    id: i,
+                    Bulan: bulan,
+                    Tahun: tahun,
+                    Kualitas_Layanan: parseInt(row[kualitasIndex]) || 0,
+                    Kepatuhan: parseInt(row[kepatuhanIndex]) || 0,
+                    Pengawasan: parseInt(row[pengawasanIndex]) || 0,
+                    Stakeholder: parseInt(row[stakeholderIndex]) || 0,
+                    SDM: parseInt(row[sdmIndex]) || 0,
+                    Review_Manual: parseInt(row[reviewManualIndex]) || 0,
+                    Reputasi: parseInt(row[reputasiIndex]) || 0,
+                    Kerugian_Financial: 0,
+                    Kerugian_Potensi_Negara: 0,
+                    Kerugian_Efisiensi: 0,
+                    Total_Kerugian_Terhindar: totalKerugian,
+                    Detail_Kerugian: ''
+                });
+            }
+            
+            return result;
+        }
+        
+        async function fetchSheetData(sheetName) {
+            try {
+                const response = await fetch(`${API_URL}?sheet=${encodeURIComponent(sheetName)}`);
+                const data = await response.json();
+                if (data.status === 'success') return data.data || [];
+                return null;
+            } catch (e) { console.error(e); return null; }
+        }
+        
+        function parseSheetData(rawData) {
+            if (!rawData || rawData.length < 2) return [];
+            const headers = rawData[0];
+            return rawData.slice(1).filter(r => r[0] && r[0].toString().trim() !== '').map(r => {
+                const obj = {};
+                headers.forEach((h, i) => { 
+                    if (h && h.trim()) obj[h.trim()] = (r[i] || '').toString().trim(); 
+                });
+                return obj;
+            });
+        }
+        
+        async function fetchAllData() {
+            try {
+                const [layananRes, rataRataRes, channelRes, dampakRes, aduanRes, kategoriRes] = await Promise.all([
+                    fetchSheetData('LAYANAN'), 
+                    fetchSheetData('RATA_RATA'),
+                    fetchSheetData('CHANNEL'),
+                    fetchSheetData('DAMPAK_RISIKO'), 
+                    fetchSheetData('ADUAN'),
+                    fetchSheetData('KATEGORI_LAYANAN')
+                ]);
+                
+                dataLayanan = layananRes ? parseSheetData(layananRes) : [];
+                dataAduan = aduanRes ? parseSheetData(aduanRes) : [];
+                
+                if (rataRataRes && rataRataRes.length > 0) {
+                    const timeValue = getTimeFromCells(rataRataRes);
+                    if (timeValue) ytdAvgTime = timeValue;
+                }
+                
+                if (channelRes && channelRes.length > 0) {
+                    const channelDataResult = getChannelData(channelRes);
+                    totalLayananYTD = channelDataResult.ytdTotal;
+                    totalLayananBulanan = channelDataResult.monthlyTotal;
+                    trenPerubahan = channelDataResult.trend;
+                    channelData = channelDataResult.channelSeries;
+                    channelConfig = channelDataResult.channelNames;
+                }
+                
+                if (dampakRes && dampakRes.length > 0) {
+                    dataDampak = parseDampakData(dampakRes);
+                }
+                
+                if (kategoriRes && kategoriRes.length > 0) {
+                    const kategoriResult = parseKategoriData(kategoriRes);
+                    kategoriHeaders = kategoriResult.headers;
+                    dataKategoriLayanan = kategoriResult.bulanData;
+                }
+                
+                if (dataLayanan.length === 0 && !channelRes) { 
+                    useDemo = true; 
+                    loadDemoData(); 
+                    document.getElementById('data-status').innerHTML = '<i class="fas fa-info-circle"></i> Demo';
+                } else {
+                    useDemo = false; 
+                    document.getElementById('data-status').innerHTML = '<i class="fas fa-check-circle"></i> Online';
+                    document.getElementById('data-status').className = 'status-badge online';
+                }
+                renderDashboard();
+            } catch (error) { 
+                console.error(error); 
+                useDemo = true; 
+                loadDemoData(); 
+                document.getElementById('data-status').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline - Demo';
+                document.getElementById('data-status').className = 'status-badge offline';
+                renderDashboard(); 
+            }
+        }
+        
+        function loadDemoData() {
+            dataLayanan = [
+                { ID: '1', Tanggal: '2026-01-01', Bulan: 'Januari', Tahun: '2026', Total_Layanan: '140', Avg_Waktu: '00:21:10' },
+                { ID: '2', Tanggal: '2026-02-01', Bulan: 'Februari', Tahun: '2026', Total_Layanan: '122', Avg_Waktu: '00:19:45' }
+            ];
+            ytdAvgTime = '00:18:45';
+            totalLayananYTD = 361;
+            totalLayananBulanan = 92;
+            trenPerubahan = '▲ 15';
+            
+            channelConfig = ['WhatsApp', 'Front Desk', 'Facebook', 'Hotline', 'Email', 'Instagram', 'Website'];
+            channelData = [
+                { bulan: 'Januari', tahun: '2026', values: [45, 32, 28, 15, 8, 7, 5] },
+                { bulan: 'Februari', tahun: '2026', values: [42, 30, 25, 14, 7, 6, 4] },
+                { bulan: 'Maret', tahun: '2026', values: [38, 28, 22, 12, 6, 5, 3] }
+            ];
+            
+            dataDampak = [
+                { Bulan: 'Januari', Tahun: '2026', Kualitas_Layanan: 63, Kepatuhan: 14, Pengawasan: 22, Stakeholder: 0, SDM: 15, Review_Manual: 2, Reputasi: 24, Total_Kerugian_Terhindar: 125000000 },
+                { Bulan: 'Februari', Tahun: '2026', Kualitas_Layanan: 42, Kepatuhan: 15, Pengawasan: 13, Stakeholder: 1, SDM: 7, Review_Manual: 1, Reputasi: 50, Total_Kerugian_Terhindar: 87500000 },
+                { Bulan: 'Maret', Tahun: '2026', Kualitas_Layanan: 0, Kepatuhan: 0, Pengawasan: 0, Stakeholder: 0, SDM: 0, Review_Manual: 0, Reputasi: 0, Total_Kerugian_Terhindar: 0 }
+            ];
+            
+            dataAduan = [
+                { timestamp: '2026-01-21', provinsi: 'Jawa Barat', lokasi_lengkap: 'Sukmajaya, Depok, Jawa Barat', lat: '-6.3943', lon: '106.8451', locationId: 'LOC001', keterangan: 'Laporan pengaduan penjualan rokok ilegal' },
+                { timestamp: '2026-01-23', provinsi: 'Jawa Barat', lokasi_lengkap: 'Bojong Gede, Bogor, Jawa Barat', lat: '-6.485', lon: '106.7965', locationId: 'LOC002', keterangan: 'Warung madura jual rokok ilegal' },
+                { timestamp: '2026-01-25', provinsi: 'Jawa Barat', lokasi_lengkap: 'Gunung Putri, Bogor, Jawa Barat', lat: '-6.4426', lon: '106.914', locationId: 'LOC003', keterangan: 'Masih banyak warung jual rokok ilegal' },
+                { timestamp: '2026-02-06', provinsi: 'Jawa Barat', lokasi_lengkap: 'Cileungsi, Bogor, Jawa Barat', lat: '-6.3947', lon: '106.9594', locationId: 'LOC004', keterangan: 'Razia rokok ilegal' },
+                { timestamp: '2026-02-10', provinsi: 'Jawa Barat', lokasi_lengkap: 'Cilaku, Cianjur, Jawa Barat', lat: '-6.8453', lon: '107.1396', locationId: 'LOC005', keterangan: 'Peredaran rokok non cukai' }
+            ];
+            
+            kategoriHeaders = ['Januari', 'Februari', 'Maret'];
+            dataKategoriLayanan = [
+                { nama: 'REGISTRASI IMEI', values: [54, 53, 47], total: 154 },
+                { nama: 'INFORMASI LAINNYA', values: [34, 25, 14], total: 73 },
+                { nama: 'PENGADUAN', values: [23, 13, 7], total: 43 },
+                { nama: 'PENIPUAN MATERIAL', values: [0, 4, 5], total: 9 },
+                { nama: 'CEISA 40', values: [1, 5, 1], total: 7 },
+                { nama: 'CUKAI', values: [4, 1, 2], total: 7 },
+                { nama: 'FOLLOW UP TIKET', values: [4, 3, 0], total: 7 }
+            ];
+        }
+        
+        function getWaktuChangeText(current, previous) {
+            if (!previous) return 'Data awal';
+            const toSeconds = (t) => { if (!t) return 0; const p = t.split(':'); return (parseInt(p[0])||0)*3600 + (parseInt(p[1])||0)*60 + (parseInt(p[2])||0); };
+            const diff = toSeconds(previous) - toSeconds(current);
+            const mins = Math.floor(Math.abs(diff) / 60);
+            if (diff > 0) return `▲ Lebih cepat ${mins} menit`;
+            if (diff < 0) return `▼ Lebih lambat ${mins} menit`;
+            return '→ Sama';
+        }
+        
+        function parseDateFromAduan(timestamp) {
+            if (!timestamp) return null;
+            const dateStr = timestamp.split(' ')[0];
+            const [year, month, day] = dateStr.split('-');
+            return { year, month: parseInt(month), monthName: getMonthName(parseInt(month)) };
+        }
+        
+        function getMonthName(month) {
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            return months[month - 1];
+        }
+        
+        function initMap(month, year) {
+            if (!map) return;
+            if (currentMarkers.length) {
+                currentMarkers.forEach(marker => map.removeLayer(marker));
+                currentMarkers = [];
+            }
+            
+            const filteredAduan = dataAduan.filter(aduan => {
+                if (!aduan.timestamp) return false;
+                const parsed = parseDateFromAduan(aduan.timestamp);
+                if (!parsed) return false;
+                return parsed.monthName === month && parsed.year === year;
+            });
+            
+            if (filteredAduan.length === 0) {
+                L.popup().setLatLng([-6.5, 107]).setContent(`📭 Tidak ada data aduan untuk ${month} ${year}`).openOn(map);
+                map.setView([-6.5, 107], 10);
+                return;
+            }
+            
+            const locationMap = new Map();
+            filteredAduan.forEach(aduan => {
+                const lat = parseFloat(aduan.lat);
+                const lng = parseFloat(aduan.lon);
+                if (isNaN(lat) || isNaN(lng)) return;
+                const key = `${lat},${lng}`;
+                if (locationMap.has(key)) {
+                    locationMap.get(key).jumlahAduan += 1;
+                } else {
+                    locationMap.set(key, { lat, lng, nama: aduan.lokasi_lengkap?.split(',')[0] || 'Lokasi', alamatLengkap: aduan.lokasi_lengkap || '', provinsi: aduan.provinsi || '', jumlahAduan: 1 });
+                }
+            });
+            
+            const aduanValues = Array.from(locationMap.values()).map(l => l.jumlahAduan);
+            const maxAduan = aduanValues.length > 0 ? Math.max(...aduanValues) : 1;
+            
+            locationMap.forEach(location => {
+                const radius = 12 + (location.jumlahAduan / maxAduan) * 36;
+                let color = location.jumlahAduan >= 5 ? '#dc3545' : (location.jumlahAduan >= 3 ? '#ffc107' : '#28a745');
+                const customIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background-color: ${color}; width: ${radius}px; height: ${radius}px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: ${Math.max(10, radius/2)}px;">${location.jumlahAduan}</div>`,
+                    iconSize: [radius, radius]
+                });
+                const marker = L.marker([location.lat, location.lng], { icon: customIcon });
+                marker.bindPopup(`<b>${location.nama}</b><br>${location.alamatLengkap}<br>Total Aduan: ${location.jumlahAduan}`);
+                marker.addTo(map);
+                currentMarkers.push(marker);
+            });
+            
+            if (locationMap.size > 0) {
+                const bounds = L.latLngBounds(Array.from(locationMap.values()).map(l => [l.lat, l.lng]));
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+        
+        function formatTrendText(trend) {
+            if (!trend || trend === '') return 'Data tidak tersedia';
+            const trendStr = trend.toString();
+            if (trendStr.includes('+') || trendStr.includes('▲')) {
+                const value = trendStr.replace(/[^0-9]/g, '');
+                return `<span class="trend-up">▲ +${value}</span>`;
+            } else if (trendStr.includes('-') || trendStr.includes('▼')) {
+                const value = trendStr.replace(/[^0-9]/g, '');
+                return `<span class="trend-down">▼ -${value}</span>`;
+            }
+            return `<span class="trend-stable">→ ${trendStr}</span>`;
+        }
+        
+        function createChannelChart() {
+            const ctx = document.getElementById('channel-chart');
+            if (!ctx) return;
+            if (channelChart) channelChart.destroy();
+            if (!channelData || channelData.length === 0) return;
+            
+            const labels = channelData.map(d => `${d.bulan} ${d.tahun}`);
+            const datasets = [];
+            
+            for (let i = 0; i < channelConfig.length; i++) {
+                const style = getChannelStyle(channelConfig[i]);
+                datasets.push({
+                    label: channelConfig[i],
+                    data: channelData.map(d => d.values[i] || 0),
+                    borderColor: style.color,
+                    backgroundColor: 'transparent',
+                    tension: 0.3,
+                    fill: false,
+                    pointBackgroundColor: style.color,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4
+                });
+            }
+            
+            channelChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Jumlah Layanan' } } }
+                }
+            });
+        }
+        
+        function createKategoriChart() {
+            const ctx = document.getElementById('kategori-chart');
+            if (!ctx) return;
+            if (kategoriChart) kategoriChart.destroy();
+            if (!dataKategoriLayanan || dataKategoriLayanan.length === 0) return;
+            
+            const labels = kategoriHeaders;
+            const colors = ['#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#4cc9f0', '#4895ef', '#560bad', '#b5179e', '#e76f51', '#f4a261'];
+            
+            const datasets = [];
+            const topKategori = dataKategoriLayanan.slice(0, 8);
+            
+            topKategori.forEach((kategori, idx) => {
+                datasets.push({
+                    label: kategori.nama,
+                    data: kategori.values,
+                    borderColor: colors[idx % colors.length],
+                    backgroundColor: colors[idx % colors.length] + '20',
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: colors[idx % colors.length],
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 3
+                });
+            });
+            
+            kategoriChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 10 } },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Jumlah Layanan' } } }
+                }
+            });
+        }
+        
+        function createImpactChart() {
+            const ctx = document.getElementById('impact-chart');
+            if (!ctx) return;
+            if (impactChart) impactChart.destroy();
+            
+            let latestData = null;
+            let latestMonth = '';
+            let latestYear = '';
+            
+            for (let i = dataDampak.length - 1; i >= 0; i--) {
+                const d = dataDampak[i];
+                const hasData = (d.Kualitas_Layanan > 0 || d.Kepatuhan > 0 || d.Pengawasan > 0 || 
+                                 d.Stakeholder > 0 || d.SDM > 0 || d.Review_Manual > 0 || d.Reputasi > 0);
+                if (hasData) {
+                    latestData = d;
+                    latestMonth = d.Bulan;
+                    latestYear = d.Tahun;
+                    break;
+                }
+            }
+            
+            if (!latestData && dataDampak.length > 0) {
+                latestData = dataDampak[dataDampak.length - 1];
+                latestMonth = latestData.Bulan;
+                latestYear = latestData.Tahun;
+            }
+            
+            const cardHeader = ctx.closest('.card')?.querySelector('.card-header span');
+            if (cardHeader && latestMonth) {
+                cardHeader.innerHTML = `${latestMonth} ${latestYear}`;
+            }
+            
+            if (!latestData) {
+                ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+                ctx.getContext('2d').font = '12px "Segoe UI"';
+                ctx.getContext('2d').fillStyle = '#6c757d';
+                ctx.getContext('2d').textAlign = 'center';
+                ctx.getContext('2d').fillText('Belum ada data dampak risiko', ctx.width / 2, ctx.height / 2);
+                return;
+            }
+            
+            const dampakValues = [
+                latestData.Kualitas_Layanan || 0,
+                latestData.Kepatuhan || 0,
+                latestData.Pengawasan || 0,
+                latestData.Stakeholder || 0,
+                latestData.SDM || 0,
+                latestData.Review_Manual || 0,
+                latestData.Reputasi || 0
+            ];
+            
+            const filteredLabels = [];
+            const filteredValues = [];
+            const filteredColors = [];
+            
+            dampakLabels.forEach((label, idx) => {
+                if (dampakValues[idx] > 0) {
+                    filteredLabels.push(label);
+                    filteredValues.push(dampakValues[idx]);
+                    filteredColors.push(dampakColors[idx]);
+                }
+            });
+            
+            if (filteredValues.length === 0) {
+                ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+                ctx.getContext('2d').font = '12px "Segoe UI"';
+                ctx.getContext('2d').fillStyle = '#6c757d';
+                ctx.getContext('2d').textAlign = 'center';
+                ctx.getContext('2d').fillText('Semua nilai dampak risiko adalah 0', ctx.width / 2, ctx.height / 2);
+                return;
+            }
+            
+            impactChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: filteredLabels,
+                    datasets: [{
+                        data: filteredValues,
+                        backgroundColor: filteredColors,
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: { size: 10 },
+                                boxWidth: 12,
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        return data.labels.map((label, i) => {
+                                            const value = data.datasets[0].data[i];
+                                            const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                            return {
+                                                text: `${label}: ${value} (${percentage}%)`,
+                                                fillStyle: data.datasets[0].backgroundColor[i],
+                                                hidden: false,
+                                                index: i
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function generateInsights() {
+            let insights = [];
+            
+            if (channelData.length > 0 && channelConfig.length > 0) {
+                const latestChannel = channelData[channelData.length - 1];
+                const prevChannel = channelData[channelData.length - 2];
+                
+                if (latestChannel) {
+                    const topChannelIndex = latestChannel.values.indexOf(Math.max(...latestChannel.values));
+                    const topChannel = channelConfig[topChannelIndex];
+                    const topValue = latestChannel.values[topChannelIndex];
+                    
+                    insights.push(`📊 **Channel Teratas**: ${topChannel} mendominasi dengan ${topValue} layanan di bulan ${latestChannel.bulan}.`);
+                    
+                    if (prevChannel) {
+                        const growthRates = latestChannel.values.map((val, i) => {
+                            const prevVal = prevChannel.values[i] || 0;
+                            return prevVal > 0 ? ((val - prevVal) / prevVal * 100) : 0;
+                        });
+                        const highestGrowthIndex = growthRates.indexOf(Math.max(...growthRates));
+                        if (highestGrowthIndex >= 0 && growthRates[highestGrowthIndex] > 10) {
+                            insights.push(`📈 **Pertumbuhan Tertinggi**: ${channelConfig[highestGrowthIndex]} meningkat ${Math.round(growthRates[highestGrowthIndex])}% dibanding bulan sebelumnya.`);
+                        }
+                    }
+                }
+            }
+            
+            if (dataKategoriLayanan.length > 0) {
+                const topCategory = dataKategoriLayanan[0];
+                insights.push(`🏷️ **Topik Terbanyak**: "${topCategory.nama}" menjadi topik layanan tertinggi dengan total ${topCategory.total} pertanyaan.`);
+                
+                if (topCategory.nama === 'REGISTRASI IMEI') {
+                    insights.push(`📱 Registrasi IMEI masih menjadi perhatian utama masyarakat. Pastikan sosialisasi terus ditingkatkan.`);
+                } else if (topCategory.nama === 'INFORMASI LAINNYA') {
+                    insights.push(`ℹ️ Tingginya "Informasi Lainnya" mengindikasikan perlunya penyederhanaan informasi dan peningkatan FAQ.`);
+                } else if (topCategory.nama === 'PENGADUAN') {
+                    insights.push(`⚠️ Aduan masyarakat cukup tinggi, perlu evaluasi responsivitas layanan dan follow-up yang lebih cepat.`);
+                }
+                
+                if (dataKategoriLayanan.length >= 2) {
+                    const secondCategory = dataKategoriLayanan[1];
+                    insights.push(`📌 Kategori "${secondCategory.nama}" juga cukup signifikan dengan ${secondCategory.total} total layanan.`);
+                }
+            }
+            
+            if (trenPerubahan && trenPerubahan !== '') {
+                const trendValue = parseInt(trenPerubahan.replace(/[^0-9-]/g, '')) || 0;
+                if (trendValue > 0) {
+                    insights.push(`📈 **Tren Positif**: Total layanan bulanan meningkat ${Math.abs(trendValue)} dibanding bulan sebelumnya.`);
+                } else if (trendValue < 0) {
+                    insights.push(`📉 **Tren Menurun**: Total layanan bulanan turun ${Math.abs(trendValue)}. Perlu analisis penyebab penurunan.`);
+                }
+            }
+            
+            if (ytdAvgTime !== '--:--:--') {
+                insights.push(`⏱️ **Waktu Respons**: Rata-rata waktu layanan YTD ${ytdAvgTime}, target untuk ditingkatkan menjadi < 15 menit.`);
+            }
+            
+            if (insights.length === 0) {
+                insights.push('📝 Belum ada data cukup untuk menghasilkan insight. Silakan periksa koneksi data.');
+            }
+            
+            return insights;
+        }
+        
+        function renderDashboard() {
+            if (dataLayanan.length === 0 && !useDemo && totalLayananYTD === 0) {
+                document.getElementById('dashboard-content').innerHTML = '<div class="loader"><i class="fas fa-database"></i> Belum ada data.</div>';
+                return;
+            }
+            
+            const current = dataLayanan.length > 0 ? dataLayanan[dataLayanan.length-1] : null;
+            const prev = dataLayanan.length>1 ? dataLayanan[dataLayanan.length-2] : null;
+            
+            const currentTotalLayanan = totalLayananBulanan > 0 ? totalLayananBulanan : (current ? current.Total_Layanan : '0');
+            const formattedTrend = formatTrendText(trenPerubahan);
+            const ytdLayanan = totalLayananYTD > 0 ? totalLayananYTD : dataLayanan.reduce((s,i) => s + (parseInt(i.Total_Layanan)||0), 0);
+            
+            // Hitung total kerugian terhindar YTD dari dataDampak
+            const ytdKerugian = dataDampak.reduce((s, i) => s + (parseInt(i.Total_Kerugian_Terhindar) || 0), 0);
+            
+            const waktuChangeText = current ? getWaktuChangeText(current.Avg_Waktu, prev?.Avg_Waktu) : 'Data tidak tersedia';
+            
+            const uniqueMonthsSet = new Set();
+            dataAduan.forEach(aduan => {
+                if (aduan.timestamp) {
+                    const parsed = parseDateFromAduan(aduan.timestamp);
+                    if (parsed) uniqueMonthsSet.add(`${parsed.monthName}|${parsed.year}`);
+                }
+            });
+            if (current) uniqueMonthsSet.add(`${current.Bulan}|${current.Tahun}`);
+            
+            const uniqueMonths = Array.from(uniqueMonthsSet).map(m => {
+                const [bulan, tahun] = m.split('|');
+                return { bulan, tahun };
+            }).sort((a, b) => {
+                if (a.tahun !== b.tahun) return parseInt(b.tahun) - parseInt(a.tahun);
+                const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                return months.indexOf(b.bulan) - months.indexOf(a.bulan);
+            });
+            
+            const demoNote = useDemo ? '<div class="card" style="background:#fff3cd; color:#856404; margin-bottom:15px;"><i class="fas fa-info-circle"></i> Mode Demo - Data hanya contoh</div>' : '';
+            const jumlahAduanBulanIni = current ? dataAduan.filter(aduan => {
+                const parsed = parseDateFromAduan(aduan.timestamp);
+                return parsed && parsed.monthName === current.Bulan && parsed.year === current.Tahun;
+            }).length : 0;
+            
+            const legendHtml = `
+                <div class="channel-legend">
+                    ${channelConfig.map((channel, i) => {
+                        const style = getChannelStyle(channel);
+                        return `
+                            <div class="channel-legend-item">
+                                <i class="${style.icon}" style="color: ${style.color}; font-size: 14px;"></i>
+                                <div class="channel-color" style="background: ${style.color};"></div>
+                                <span>${channel}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            
+            const categoryLegendHtml = dataKategoriLayanan.length > 0 ? `
+                <div class="category-legend">
+                    ${dataKategoriLayanan.slice(0, 12).map((cat, idx) => {
+                        const colors = ['#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#4cc9f0', '#4895ef', '#560bad', '#b5179e', '#e76f51', '#f4a261', '#2b9348', '#e9c46a'];
+                        return `
+                            <div class="category-legend-item" onclick="toggleCategoryDataset(${idx})">
+                                <div class="category-color" style="background: ${colors[idx % colors.length]}"></div>
+                                <span>${cat.nama}</span>
+                                <span style="font-weight:bold; font-size:10px;">(${cat.total})</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            ` : '';
+            
+            const insights = generateInsights();
+            const insightsHtml = `
+                <div class="insight-card">
+                    <h4><i class="fas fa-lightbulb"></i> Insight Analisis Layanan</h4>
+                    ${insights.map(insight => `<p><i class="fas fa-chart-line" style="color:#1e3c72; margin-right:8px;"></i> ${insight}</p>`).join('')}
+                    <div class="insight-highlight">
+                        <i class="fas fa-chart-simple"></i> Rekomendasi: Fokus pada peningkatan kualitas layanan melalui channel digital dan optimalisasi respon terhadap topik layanan tertinggi.
+                    </div>
+                </div>
+            `;
+            
+            // Format nominal kerugian dengan pemisah ribuan
+            const formattedKerugian = ytdKerugian.toLocaleString('id-ID');
+            
+            const html = `
+                ${demoNote}
+                <div class="kpi-row">
+                    <div class="kpi-card" style="border-left-color:#2e7d32;">
+                        <div><div class="kpi-value">${typeof currentTotalLayanan === 'number' ? currentTotalLayanan.toLocaleString() : currentTotalLayanan}</div><div class="kpi-label">Total Layanan Bulanan</div><div class="kpi-small">${formattedTrend}</div></div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color:#1976d2;">
+                        <div><div class="kpi-value">${ytdAvgTime}</div><div class="kpi-label">Rata-rata Waktu Layanan YTD</div><div class="kpi-small">${waktuChangeText}</div></div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color:#ff9800;">
+                        <div><div class="kpi-value">${ytdLayanan.toLocaleString()}</div><div class="kpi-label">Total Layanan YTD</div></div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color:#9c27b0;">
+                        <div><div class="kpi-value">Rp ${formattedKerugian}</div><div class="kpi-label">Kerugian Terhindar YTD</div><div class="kpi-small">Dari sheet DAMPAK_RISIKO</div></div>
+                    </div>
+                </div>
+                
+                <div class="row-charts">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-chart-line"></i> Tren Layanan per Channel</h3><span>YTD ${ytdLayanan.toLocaleString()} layanan</span></div>
+                        <canvas id="channel-chart" height="280"></canvas>
+                        ${legendHtml}
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-chart-line"></i> Tren Kategori Layanan (Top 8)</h3><span>Berdasarkan jumlah pertanyaan</span></div>
+                        <canvas id="kategori-chart" height="280"></canvas>
+                        ${categoryLegendHtml}
+                    </div>
+                </div>
+                
+                ${insightsHtml}
+                
+                <div class="row-charts">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-chart-pie"></i> Dampak Risiko (Bulan Ini)</h3><span>Memuat...</span></div>
+                        <canvas id="impact-chart" height="250"></canvas>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-exclamation-triangle"></i> Detail Dampak Risiko</h3></div>
+                        <table style="width:100%">
+                            <thead>
+                                <tr><th>Kategori</th><th>Jumlah</th><th>Batas</th><th>Status</th><th>Rekomendasi</th></tr>
+                            </thead>
+                            <tbody id="dampak-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="map-container">
+                    <div class="card-header">
+                        <h3><i class="fas fa-map-marked-alt"></i> Peta Sebaran Aduan Masyarakat</h3>
+                        <div class="month-selector">
+                            <select id="month-select">
+                                ${uniqueMonths.map(m => `<option value="${m.bulan}|${m.tahun}" ${current && m.bulan === current.Bulan && m.tahun === current.Tahun ? 'selected' : ''}>${m.bulan} ${m.tahun}</option>`).join('')}
+                            </select>
+                            <button id="btn-show-map"><i class="fas fa-sync-alt"></i> Tampilkan</button>
+                        </div>
+                    </div>
+                    <div id="map"></div>
+                    <div class="map-legend">
+                        <div class="legend-item"><div class="legend-marker small"></div> <span>Frekuensi Rendah (1-2 aduan)</span></div>
+                        <div class="legend-item"><div class="legend-marker medium"></div> <span>Frekuensi Sedang (3-4 aduan)</span></div>
+                        <div class="legend-item"><div class="legend-marker large"></div> <span>Frekuensi Tinggi (5+ aduan)</span></div>
+                        <div class="legend-item"><i class="fas fa-info-circle"></i> <span>Hover = detail | Klik = info lengkap</span></div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('dashboard-content').innerHTML = html;
+            
+            setTimeout(() => {
+                createChannelChart();
+                createKategoriChart();
+                createImpactChart();
+            }, 100);
+            
+            if (!isMapInitialized) {
+                map = L.map('map').setView([-6.5, 107], 10);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '© OpenStreetMap',
+                    maxZoom: 19
+                }).addTo(map);
+                isMapInitialized = true;
+            }
+            if (current) setTimeout(() => initMap(current.Bulan, current.Tahun), 200);
+            
+            const btnShowMap = document.getElementById('btn-show-map');
+            if (btnShowMap) {
+                const newBtn = btnShowMap.cloneNode(true);
+                btnShowMap.parentNode.replaceChild(newBtn, btnShowMap);
+                newBtn.addEventListener('click', () => {
+                    const [bulan, tahun] = document.getElementById('month-select').value.split('|');
+                    initMap(bulan, tahun);
+                });
+            }
+            
+            let latestDampak = null;
+            for (let i = dataDampak.length - 1; i >= 0; i--) {
+                const d = dataDampak[i];
+                const hasData = (d.Kualitas_Layanan > 0 || d.Kepatuhan > 0 || d.Pengawasan > 0);
+                if (hasData) {
+                    latestDampak = d;
+                    break;
+                }
+            }
+            if (!latestDampak && dataDampak.length > 0) {
+                latestDampak = dataDampak[dataDampak.length - 1];
+            }
+            
+            const tbody = document.getElementById('dampak-table-body');
+            if (tbody && latestDampak) {
+                const dampakItems = [
+                    { nama: 'Dampak Kualitas Layanan & SLA', jumlah: latestDampak.Kualitas_Layanan || 0, threshold: 30, rekomendasi: 'Review SOP', pic: 'Sie Layanan' },
+                    { nama: 'Dampak Kepatuhan & Regulasi', jumlah: latestDampak.Kepatuhan || 0, threshold: 10, rekomendasi: 'Koordinasi PKC', pic: 'Seksi PKC' },
+                    { nama: 'Pengawasan & Penegakan Hukum', jumlah: latestDampak.Pengawasan || 0, threshold: 10, rekomendasi: 'Operasi gabungan', pic: 'Seksi Intel' },
+                    { nama: 'Dampak Hubungan Pemangku Kepentingan', jumlah: latestDampak.Stakeholder || 0, threshold: 5, rekomendasi: 'Komunikasi intensif', pic: 'Seksi Humas' },
+                    { nama: 'Dampak SDM & Proses Internal', jumlah: latestDampak.SDM || 0, threshold: 3, rekomendasi: 'Evaluasi kinerja', pic: 'Seksi SDM' },
+                    { nama: 'Perlu Review Manual/Tidak terkait pada MR', jumlah: latestDampak.Review_Manual || 0, threshold: 2, rekomendasi: 'Review prosedur', pic: 'Tim MR' },
+                    { nama: 'Dampak Reputasi & Persepsi Publik', jumlah: latestDampak.Reputasi || 0, threshold: 4, rekomendasi: 'Strategi komunikasi', pic: 'Sie Humas' }
+                ];
+                tbody.innerHTML = dampakItems.map(d => {
+                    let status = d.jumlah >= d.threshold * 2 ? '🔴 Darurat' : (d.jumlah >= d.threshold ? '🟡 Waspada' : '🟢 Normal');
+                    return `<tr><td>${d.nama}</td><td>${d.jumlah}</td><td>${d.threshold}</td><td>${status}</td><td>${d.rekomendasi} (PIC: ${d.pic})</td></tr>`;
+                }).join('');
+            }
+        }
+        
+        // Global function untuk toggle dataset
+        window.toggleCategoryDataset = function(index) {
+            if (kategoriChart && kategoriChart.data.datasets[index]) {
+                const dataset = kategoriChart.data.datasets[index];
+                dataset.hidden = !dataset.hidden;
+                kategoriChart.update();
+            }
+        };
+        
+        fetchAllData();
+    </script>
+</body>
+</html>

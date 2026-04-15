@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publikasi Dashboard - Analisis Konten & Performa</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Roboto', sans-serif; background: #f0f2f5; padding: 20px; }
+        .dashboard-container { max-width: 1400px; margin: 0 auto; }
+        
+        /* Style untuk PDF 1 Halaman A4 - lebih kompak */
+        .pdf-one-page {
+            max-width: 210mm !important;
+            margin: 0 auto !important;
+            background: white !important;
+            padding: 5mm 8mm !important;
+            font-size: 11px !important;
+        }
+        .pdf-one-page .header,
+        .pdf-one-page .back-btn,
+        .pdf-one-page .export-btn,
+        .pdf-one-page .refresh-btn,
+        .pdf-one-page .status-badge {
+            display: none !important;
+        }
+        .pdf-one-page .hero-card {
+            padding: 12px !important;
+            margin-bottom: 8px !important;
+        }
+        .pdf-one-page .hero-value {
+            font-size: 28px !important;
+        }
+        .pdf-one-page .hero-stat {
+            padding: 6px !important;
+            min-width: auto !important;
+        }
+        .pdf-one-page .hero-stat-value {
+            font-size: 14px !important;
+        }
+        .pdf-one-page .hero-stat-sub {
+            font-size: 9px !important;
+        }
+        .pdf-one-page .kpi-row {
+            gap: 8px !important;
+            margin-bottom: 8px !important;
+        }
+        .pdf-one-page .kpi-card {
+            padding: 8px !important;
+        }
+        .pdf-one-page .kpi-value {
+            font-size: 18px !important;
+        }
+        .pdf-one-page .card {
+            padding: 10px !important;
+            margin-bottom: 8px !important;
+        }
+        .pdf-one-page .card-header {
+            margin-bottom: 8px !important;
+            padding-bottom: 5px !important;
+        }
+        .pdf-one-page .card-header h3 {
+            font-size: 12px !important;
+        }
+        .pdf-one-page .channel-performance {
+            gap: 8px !important;
+            margin-bottom: 8px !important;
+        }
+        .pdf-one-page .channel-card {
+            padding: 8px !important;
+        }
+        .pdf-one-page .channel-icon {
+            font-size: 20px !important;
+            margin-bottom: 4px !important;
+        }
+        .pdf-one-page .channel-name {
+            font-size: 12px !important;
+            margin-bottom: 4px !important;
+        }
+        .pdf-one-page .channel-percentage {
+            font-size: 20px !important;
+            margin-bottom: 2px !important;
+        }
+        .pdf-one-page .channel-avg-reach,
+        .pdf-one-page .channel-reach,
+        .pdf-one-page .channel-follower {
+            font-size: 9px !important;
+            margin-bottom: 2px !important;
+        }
+        .pdf-one-page .progress-bar-custom {
+            height: 4px !important;
+            margin-top: 4px !important;
+        }
+        .pdf-one-page .insight-box {
+            padding: 6px !important;
+            margin-bottom: 8px !important;
+            font-size: 10px !important;
+        }
+        .pdf-one-page .ranking-item {
+            padding: 4px 0 !important;
+        }
+        .pdf-one-page .ranking-rank {
+            width: 20px !important;
+            font-size: 10px !important;
+        }
+        .pdf-one-page .ranking-content {
+            font-size: 10px !important;
+        }
+        .pdf-one-page .ranking-value {
+            font-size: 10px !important;
+        }
+        .pdf-one-page .recommendation-card {
+            padding: 6px !important;
+            margin-top: 4px !important;
+            font-size: 10px !important;
+        }
+        .pdf-one-page .chart-container {
+            max-height: 150px !important;
+        }
+        .pdf-one-page .table-responsive {
+            max-height: 180px !important;
+        }
+        .pdf-one-page table {
+            font-size: 8px !important;
+        }
+        .pdf-one-page th, .pdf-one-page td {
+            padding: 4px 3px !important;
+        }
+        .pdf-one-page .url-info {
+            padding: 5px !important;
+            font-size: 8px !important;
+            margin-top: 5px !important;
+        }
+        .pdf-one-page .row-2 {
+            gap: 8px !important;
+            margin-bottom: 8px !important;
+        }
+        .pdf-one-page .badge {
+            font-size: 8px !important;
+            padding: 2px 5px !important;
+        }
+        .pdf-one-page .signal-hijau,
+        .pdf-one-page .signal-kuning,
+        .pdf-one-page .signal-merah,
+        .pdf-one-page .signal-abu {
+            padding: 2px 6px !important;
+            font-size: 8px !important;
+        }
+        
+        .header { background: linear-gradient(135deg, #ff9800, #f57c00); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .back-btn, .export-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .back-btn:hover, .export-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .export-btn { background: #28a745; }
+        .export-btn:hover { background: #218838; }
+        .status-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 11px; }
+        .status-badge.online { background: #28a745; }
+        .status-badge.loading { background: #ffc107; color: #212529; }
+        .status-badge.error { background: #dc3545; }
+        
+        .hero-card { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; border-radius: 20px; padding: 25px; margin-bottom: 20px; }
+        .hero-title { font-size: 14px; opacity: 0.9; margin-bottom: 10px; }
+        .hero-value { font-size: 48px; font-weight: bold; margin-bottom: 10px; }
+        .hero-stats { display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
+        .hero-stat { flex: 1; min-width: 200px; background: rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; }
+        .hero-stat-label { font-size: 12px; opacity: 0.8; margin-bottom: 5px; }
+        .hero-stat-value { font-size: 20px; font-weight: bold; }
+        .hero-stat-sub { font-size: 11px; opacity: 0.7; margin-top: 5px; }
+        
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
+        .kpi-card { background: white; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 4px solid #ff9800; }
+        .kpi-value { font-size: 28px; font-weight: bold; color: #ff9800; }
+        .kpi-trend { font-size: 12px; margin-top: 5px; }
+        .kpi-trend.up { color: #28a745; }
+        .kpi-trend.down { color: #dc3545; }
+        
+        .card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #e9ecef; padding-bottom: 10px; flex-wrap: wrap; }
+        .card-header h3 { font-size: 16px; color: #1e3c72; display: flex; align-items: center; gap: 8px; }
+        
+        .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        
+        .channel-performance {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .channel-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 4px solid;
+            transition: transform 0.2s;
+        }
+        .channel-card:hover { transform: translateY(-5px); }
+        .channel-card.ig { border-top-color: #E4405F; }
+        .channel-card.fb { border-top-color: #1877F2; }
+        .channel-card.x { border-top-color: #000000; }
+        .channel-icon { font-size: 32px; margin-bottom: 10px; }
+        .channel-name { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .channel-percentage { font-size: 36px; font-weight: bold; color: #ff9800; margin-bottom: 5px; }
+        .channel-avg-reach { font-size: 13px; color: #6c757d; margin-bottom: 5px; }
+        .channel-reach { font-size: 14px; color: #6c757d; margin-bottom: 5px; }
+        .channel-follower { font-size: 12px; color: #6c757d; margin-bottom: 10px; }
+        .progress-bar-custom { background: #e9ecef; border-radius: 10px; height: 8px; width: 100%; margin-top: 10px; overflow: hidden; }
+        .progress-fill-custom { border-radius: 10px; height: 100%; width: 0%; transition: width 0.5s ease; }
+        .ig-fill { background: #E4405F; }
+        .fb-fill { background: #1877F2; }
+        .x-fill { background: #000000; }
+        
+        .insight-box {
+            background: #e8f4fd;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        .insight-box.warning { background: #fff3cd; border-left-color: #ffc107; }
+        .insight-box.success { background: #d4edda; border-left-color: #28a745; }
+        
+        .ranking-list { list-style: none; padding: 0; }
+        .ranking-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e9ecef; }
+        .ranking-rank { font-weight: bold; width: 30px; color: #ff9800; }
+        .ranking-content { flex: 1; }
+        .ranking-value { font-weight: bold; color: #1e3c72; }
+        
+        .recommendation-card { background: #f0f7ff; border-radius: 12px; padding: 12px; margin-top: 10px; font-size: 13px; }
+        .recommendation-card i { color: #ff9800; margin-right: 8px; }
+        
+        .chart-container { max-height: 300px; margin-bottom: 10px; }
+        .chart-small { max-height: 250px; }
+        
+        .signal-hijau { background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .signal-kuning { background: #ffc107; color: #212529; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .signal-merah { background: #dc3545; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .signal-abu { background: #6c757d; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { padding: 10px 6px; text-align: left; border-bottom: 1px solid #e9ecef; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .table-responsive { overflow-x: auto; max-height: 400px; overflow-y: auto; }
+        .badge { background: #e9ecef; padding: 4px 8px; border-radius: 12px; font-size: 11px; }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 50px;
+            background: white;
+            border-radius: 15px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff9800;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .url-info {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+        
+        .formula-badge {
+            background: #ff9800;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .refresh-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .refresh-btn:hover { background: #218838; transform: translateY(-2px); }
+        
+        /* Loading overlay untuk export */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+        .pdf-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #ff9800;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .loading-text {
+            color: white;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 800px) { 
+            .kpi-row, .channel-performance, .row-2 { grid-template-columns: 1fr; } 
+            .hero-stats { flex-direction: column; }
+        }
+        
+        @media print {
+            .back-btn, .export-btn, .refresh-btn, .header button, .status-badge {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="pdf-spinner"></div>
+        <div class="loading-text">Menyiapkan PDF 1 Halaman A4...</div>
+    </div>
+    
+    <div class="dashboard-container" id="dashboardContainer">
+        <div class="header">
+            <div>
+                <h1><i class="fas fa-chart-line"></i> Publikasi & Content Analytics</h1>
+                <p style="font-size: 13px;">Dashboard Performa Kehumasan | Insight Strategis & Rekomendasi</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <span id="data-status" class="status-badge loading"><i class="fas fa-spinner fa-spin"></i> Memuat Data...</span>
+                <button class="export-btn" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> Export PDF (1 Halaman)</button>
+                <button class="refresh-btn" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refresh Data</button>
+                <button class="back-btn" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-left"></i> Kembali</button>
+            </div>
+        </div>
+        
+        <div id="dashboard-content">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Mengambil data dari Server yang sudah kita sepakati bersama...</p>
+                <p style="font-size: 12px; color: #6c757d; margin-top: 10px;">
+                    <i class="fas fa-link"></i> Mengambil data dari via Apps Script
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ==================== KONFIGURASI GOOGLE SHEET ====================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbywHucFlh5aJAPbVMUWGA_REGi9lrax2IjYMbPtHJoMTIYqIriHeRFnjygQMbICNJphhg/exec';
+        const SHEET_NAME = 'ENGAGEMENT';
+        
+        // Data follower
+        const followerData = { instagram: 5450, facebook: 837, x: 1403 };
+        
+        // Variabel global
+        let engagementData = [];
+        let currentCharts = { reachChart: null };
+        
+        // ==================== FUNGSI MENGAMBIL DATA DARI APPS SCRIPT ====================
+        async function fetchDataFromGoogleSheet() {
+            try {
+                const timestamp = new Date().getTime();
+                console.log(`Mengambil data dari Apps Script dengan timestamp: ${timestamp}`);
+                const response = await fetch(`${API_URL}?sheet=${SHEET_NAME}&_=${timestamp}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (!result || !result.data || !Array.isArray(result.data) || result.data.length < 2) {
+                    throw new Error('Data tidak valid atau kosong dari Google Sheet');
+                }
+                
+                const headers = result.data[0];
+                const rows = result.data.slice(1).filter(row => row && row.length > 0 && row[0]);
+                
+                if (rows.length === 0) {
+                    throw new Error('Tidak ada data baris dalam sheet ENGAGEMENT');
+                }
+                
+                console.log('Headers dari Google Sheet:', headers);
+                
+                engagementData = rows.map(row => {
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        let value = row[index] !== undefined ? row[index] : '';
+                        obj[header] = value;
+                    });
+                    
+                    const id = obj['Id'] || obj['ID'] || obj['No'] || '';
+                    const tanggal = obj['Tanggal'] || '';
+                    const channel = obj['Channel'] || '';
+                    const metode = obj['Metode'] || 'Mandiri';
+                    
+                    let ig_reach = parseNumber(obj['IG_REACH'] || 0);
+                    let fb_reach = parseNumber(obj['FB_REACH'] || 0);
+                    let x_reach = parseNumber(obj['X_REACH'] || 0);
+                    
+                    let ig_performa = obj['IG_PERFORMA'] || 'No Data';
+                    let fb_performa = obj['FB _PERFORMA'] || obj['FB_PERFORMA'] || 'No Data';
+                    let x_performa = obj['X_PERFORMA'] || 'No Data';
+                    
+                    return {
+                        no: parseInt(id) || 0,
+                        tanggal: tanggal,
+                        channel: channel,
+                        metode: metode,
+                        ig_reach: ig_reach,
+                        fb_reach: fb_reach,
+                        x_reach: x_reach,
+                        ig_performa: ig_performa,
+                        fb_performa: fb_performa,
+                        x_performa: x_performa
+                    };
+                });
+                
+                console.log(`Data berhasil diambil: ${engagementData.length} entri`);
+                
+                if (engagementData.length === 0) {
+                    throw new Error('Tidak ada data setelah diproses');
+                }
+                
+                updateStatus('online', 'Online');
+                return true;
+                
+            } catch (error) {
+                console.error('Error mengambil data:', error);
+                updateStatus('error', `Gagal: ${error.message}`);
+                return false;
+            }
+        }
+        
+        function parseNumber(value) {
+            if (!value || value === '0') return 0;
+            if (typeof value === 'number') return value;
+            const cleaned = String(value).replace(/,/g, '');
+            const parsed = parseInt(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+        
+        function updateStatus(status, message) {
+            const statusElement = document.getElementById('data-status');
+            if (!statusElement) return;
+            statusElement.className = `status-badge ${status}`;
+            if (status === 'online') statusElement.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            else if (status === 'loading') statusElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${message}`;
+            else statusElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+        }
+        
+        // ==================== PERHITUNGAN METRIK ====================
+        function calculateMetrics() {
+            if (!engagementData.length) {
+                return null;
+            }
+            
+            const totalKonten = engagementData.length;
+            
+            let totalIGReach = 0, totalFBReach = 0, totalXReach = 0;
+            let igPostCount = 0, fbPostCount = 0, xPostCount = 0;
+            
+            engagementData.forEach(item => {
+                if (item.ig_reach > 0) {
+                    totalIGReach += item.ig_reach;
+                    igPostCount++;
+                }
+                if (item.fb_reach > 0) {
+                    totalFBReach += item.fb_reach;
+                    fbPostCount++;
+                }
+                if (item.x_reach > 0) {
+                    totalXReach += item.x_reach;
+                    xPostCount++;
+                }
+            });
+            
+            if (igPostCount === 0 && fbPostCount === 0 && xPostCount === 0) {
+                engagementData.forEach(item => {
+                    totalIGReach += item.ig_reach;
+                    totalFBReach += item.fb_reach;
+                    totalXReach += item.x_reach;
+                    if (item.ig_reach > 0) igPostCount++;
+                    if (item.fb_reach > 0) fbPostCount++;
+                    if (item.x_reach > 0) xPostCount++;
+                });
+            }
+            
+            const avgIGReach = igPostCount > 0 ? totalIGReach / igPostCount : 0;
+            const avgFBReach = fbPostCount > 0 ? totalFBReach / fbPostCount : 0;
+            const avgXReach = xPostCount > 0 ? totalXReach / xPostCount : 0;
+            
+            const efektivitasIg = followerData.instagram > 0 ? ((avgIGReach / followerData.instagram) * 100).toFixed(1) : 0;
+            const efektivitasFb = followerData.facebook > 0 ? ((avgFBReach / followerData.facebook) * 100).toFixed(1) : 0;
+            const efektivitasX = followerData.x > 0 ? ((avgXReach / followerData.x) * 100).toFixed(1) : 0;
+            
+            const totalJangkauan = totalIGReach + totalFBReach + totalXReach;
+            const efektivitasRata = ((parseFloat(efektivitasIg) + parseFloat(efektivitasFb) + parseFloat(efektivitasX)) / 3).toFixed(1);
+            
+            let totalKontenMandiri = 0, totalReachMandiri = 0;
+            let totalKontenRepost = 0, totalReachRepost = 0;
+            
+            engagementData.forEach(item => {
+                const totalReach = item.ig_reach + item.fb_reach + item.x_reach;
+                const metodeLower = (item.metode || '').toLowerCase();
+                if (metodeLower === "mandiri") {
+                    totalKontenMandiri++;
+                    totalReachMandiri += totalReach;
+                } else if (metodeLower === "repost") {
+                    totalKontenRepost++;
+                    totalReachRepost += totalReach;
+                }
+            });
+            
+            const avgReachMandiri = totalKontenMandiri > 0 ? (totalReachMandiri / totalKontenMandiri).toFixed(0) : 0;
+            const avgReachRepost = totalKontenRepost > 0 ? (totalReachRepost / totalKontenRepost).toFixed(0) : 0;
+            
+            const topKonten = engagementData.map(item => ({
+                no: item.no,
+                tanggal: item.tanggal,
+                channel: item.channel,
+                metode: item.metode,
+                totalReach: item.ig_reach + item.fb_reach + item.x_reach,
+                performa: item.ig_performa !== "No Data" ? item.ig_performa : (item.fb_performa !== "No Data" ? item.fb_performa : item.x_performa)
+            })).sort((a, b) => b.totalReach - a.totalReach).slice(0, 5);
+            
+            let igData = [], fbData = [], xData = [], chartLabels = [];
+            engagementData.forEach((item, idx) => {
+                chartLabels.push(`${item.no || (idx+1)}`);
+                igData.push(item.ig_reach);
+                fbData.push(item.fb_reach);
+                xData.push(item.x_reach);
+            });
+            
+            const channelByEffectiveness = [
+                { name: "Instagram", effectiveness: parseFloat(efektivitasIg), icon: "fa-instagram", avgReach: avgIGReach, totalReach: totalIGReach, postCount: igPostCount },
+                { name: "Facebook", effectiveness: parseFloat(efektivitasFb), icon: "fa-facebook", avgReach: avgFBReach, totalReach: totalFBReach, postCount: fbPostCount },
+                { name: "X (Twitter)", effectiveness: parseFloat(efektivitasX), icon: "fa-twitter", avgReach: avgXReach, totalReach: totalXReach, postCount: xPostCount }
+            ];
+            const bestEffectivenessChannel = channelByEffectiveness.reduce((a, b) => a.effectiveness > b.effectiveness ? a : b);
+            
+            const channelByReach = [
+                { name: "Instagram", reach: totalIGReach, icon: "fa-instagram" },
+                { name: "Facebook", reach: totalFBReach, icon: "fa-facebook" },
+                { name: "X (Twitter)", reach: totalXReach, icon: "fa-twitter" }
+            ];
+            const bestReachChannel = channelByReach.reduce((a, b) => a.reach > b.reach ? a : b);
+            
+            return {
+                totalKonten, totalJangkauan, efektivitasRata,
+                efektivitasIg, efektivitasFb, efektivitasX,
+                avgIGReach, avgFBReach, avgXReach,
+                totalIGReach, totalFBReach, totalXReach,
+                igPostCount, fbPostCount, xPostCount,
+                avgReachMandiri, avgReachRepost, totalKontenMandiri, totalKontenRepost,
+                topKonten,
+                bestReachChannel, bestEffectivenessChannel,
+                chartLabels, igData, fbData, xData
+            };
+        }
+        
+        // ==================== RENDER DASHBOARD ====================
+        function renderDashboard() {
+            const metrics = calculateMetrics();
+            
+            if (!metrics) {
+                document.getElementById('dashboard-content').innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
+                        <h3>Tidak Dapat Memuat Dashboard</h3>
+                        <p>Tidak ada data yang valid dari Google Sheet ENGAGEMENT.</p>
+                        <button onclick="location.reload()" style="margin-top: 15px; padding: 8px 16px; background: #ff9800; border: none; border-radius: 8px; cursor: pointer;">
+                            <i class="fas fa-sync-alt"></i> Muat Ulang
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const html = `
+                <div class="hero-card">
+                    <div class="hero-title"><i class="fas fa-chart-line"></i> TOTAL JANGKAUAN PUBLIKASI</div>
+                    <div class="hero-value">${metrics.totalJangkauan.toLocaleString()}</div>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <div class="hero-stat-label"><i class="fas fa-chart-line"></i> Channel Jangkauan Terluas</div>
+                            <div class="hero-stat-value"><i class="fab ${metrics.bestReachChannel.icon}"></i> ${metrics.bestReachChannel.name}</div>
+                            <div class="hero-stat-sub">Total Reach: ${metrics.bestReachChannel.reach.toLocaleString()}</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-label"><i class="fas fa-chart-simple"></i> Channel Efektivitas Tertinggi</div>
+                            <div class="hero-stat-value"><i class="fab ${metrics.bestEffectivenessChannel.icon}"></i> ${metrics.bestEffectivenessChannel.name}</div>
+                            <div class="hero-stat-sub">Efektivitas: ${metrics.bestEffectivenessChannel.effectiveness}%</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-label"><i class="fas fa-newspaper"></i> Total Konten</div>
+                            <div class="hero-stat-value">${metrics.totalKonten}</div>
+                            <div class="hero-stat-sub">IG: ${metrics.igPostCount} | FB: ${metrics.fbPostCount} | X: ${metrics.xPostCount}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kpi-row">
+                    <div class="kpi-card"><div class="kpi-value">${metrics.totalJangkauan.toLocaleString()}</div><div>Total Jangkauan</div><div class="kpi-trend up">IG+FB+X</div></div>
+                    <div class="kpi-card"><div class="kpi-value">${metrics.efektivitasRata}%</div><div>Rata-rata Efektivitas</div><div class="kpi-trend ${metrics.efektivitasRata > 150 ? 'up' : 'down'}">${metrics.efektivitasRata > 150 ? '▲ Sangat Baik' : '▼ Perlu Peningkatan'}</div></div>
+                    <div class="kpi-card"><div class="kpi-value">${metrics.totalKontenMandiri}</div><div>Konten Mandiri</div><div class="kpi-trend up">Reach: ${metrics.avgReachMandiri.toLocaleString()}</div></div>
+                    <div class="kpi-card"><div class="kpi-value">${metrics.totalKontenRepost}</div><div>Konten Repost</div><div class="kpi-trend down">Reach: ${metrics.avgReachRepost.toLocaleString()}</div></div>
+                </div>
+                
+                <div class="insight-box success">
+                    <i class="fas fa-calculator"></i> <strong>Formula Efektivitas:</strong> (Rata-rata Reach per Postingan / Jumlah Follower) × 100%
+                    <span class="formula-badge"><i class="fas fa-chart-line"></i> Akurasi Tinggi</span>
+                </div>
+                
+                <div class="channel-performance">
+                    <div class="channel-card ig">
+                        <div class="channel-icon"><i class="fab fa-instagram"></i></div>
+                        <div class="channel-name">Instagram</div>
+                        <div class="channel-percentage">${metrics.efektivitasIg}%</div>
+                        <div class="channel-avg-reach"><i class="fas fa-chart-line"></i> Avg/Post: ${Math.round(metrics.avgIGReach).toLocaleString()}</div>
+                        <div class="channel-reach"><i class="fas fa-eye"></i> Total Reach: ${metrics.totalIGReach.toLocaleString()}</div>
+                        <div class="channel-follower"><i class="fas fa-users"></i> Follower: ${followerData.instagram.toLocaleString()}</div>
+                        <div class="progress-bar-custom"><div class="progress-fill-custom ig-fill" style="width: ${Math.min(metrics.efektivitasIg, 400)}%;"></div></div>
+                        <div style="font-size: 10px; color: #6c757d; margin-top: 5px;">${metrics.igPostCount} postingan</div>
+                    </div>
+                    <div class="channel-card fb">
+                        <div class="channel-icon"><i class="fab fa-facebook"></i></div>
+                        <div class="channel-name">Facebook</div>
+                        <div class="channel-percentage">${metrics.efektivitasFb}%</div>
+                        <div class="channel-avg-reach"><i class="fas fa-chart-line"></i> Avg/Post: ${Math.round(metrics.avgFBReach).toLocaleString()}</div>
+                        <div class="channel-reach"><i class="fas fa-eye"></i> Total Reach: ${metrics.totalFBReach.toLocaleString()}</div>
+                        <div class="channel-follower"><i class="fas fa-users"></i> Follower: ${followerData.facebook.toLocaleString()}</div>
+                        <div class="progress-bar-custom"><div class="progress-fill-custom fb-fill" style="width: ${Math.min(metrics.efektivitasFb, 400)}%;"></div></div>
+                        <div style="font-size: 10px; color: #6c757d; margin-top: 5px;">${metrics.fbPostCount} postingan</div>
+                    </div>
+                    <div class="channel-card x">
+                        <div class="channel-icon"><i class="fab fa-twitter"></i></div>
+                        <div class="channel-name">X (Twitter)</div>
+                        <div class="channel-percentage">${metrics.efektivitasX}%</div>
+                        <div class="channel-avg-reach"><i class="fas fa-chart-line"></i> Avg/Post: ${Math.round(metrics.avgXReach).toLocaleString()}</div>
+                        <div class="channel-reach"><i class="fas fa-eye"></i> Total Reach: ${metrics.totalXReach.toLocaleString()}</div>
+                        <div class="channel-follower"><i class="fas fa-users"></i> Follower: ${followerData.x.toLocaleString()}</div>
+                        <div class="progress-bar-custom"><div class="progress-fill-custom x-fill" style="width: ${Math.min(metrics.efektivitasX, 400)}%;"></div></div>
+                        <div style="font-size: 10px; color: #6c757d; margin-top: 5px;">${metrics.xPostCount} postingan</div>
+                    </div>
+                </div>
+                
+                <div class="row-2">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-trophy"></i> Top 5 Konten Terbaik</h3></div>
+                        <ul class="ranking-list">
+                            ${metrics.topKonten.map((item, idx) => `
+                                <li class="ranking-item">
+                                    <span class="ranking-rank">${idx+1}</span>
+                                    <span class="ranking-content">
+                                        <strong>#${item.no}</strong> - ${item.tanggal} (${item.channel})<br>
+                                        <small>${item.metode}</small>
+                                    </span>
+                                    <span class="ranking-value">${item.totalReach.toLocaleString()}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-chart-simple"></i> Performa per Metode</h3></div>
+                        <div style="margin-bottom: 8px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span><i class="fas fa-pen-fancy"></i> Mandiri (${metrics.totalKontenMandiri} konten)</span>
+                                <span><strong>${metrics.avgReachMandiri.toLocaleString()}</strong> rata-rata</span>
+                            </div>
+                            <div class="progress-bar-custom"><div class="progress-fill-custom" style="width: ${metrics.totalKontenMandiri/metrics.totalKonten*100}%; background: #28a745;"></div></div>
+                            <div style="margin-top: 6px; display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span><i class="fas fa-retweet"></i> Repost (${metrics.totalKontenRepost} konten)</span>
+                                <span><strong>${metrics.avgReachRepost.toLocaleString()}</strong> rata-rata</span>
+                            </div>
+                            <div class="progress-bar-custom"><div class="progress-fill-custom" style="width: ${metrics.totalKontenRepost/metrics.totalKonten*100}%; background: #ffc107;"></div></div>
+                        </div>
+                        <div class="insight-box" style="margin-top: 6px; padding: 6px;">
+                            <i class="fas fa-chart-line"></i> Konten <strong>Mandiri</strong> memiliki reach ${(metrics.avgReachMandiri/metrics.avgReachRepost).toFixed(1)}x lebih tinggi.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header"><h3><i class="fas fa-chart-line"></i> Reach per Konten (IG, FB, X)</h3></div>
+                    <div class="chart-container" style="max-height: 150px;">
+                        <canvas id="reachChart" height="130" style="max-height: 130px;"></canvas>
+                    </div>
+                </div>
+                
+                <div class="row-2">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-lightbulb"></i> Rekomendasi Strategi</h3></div>
+                        <div class="recommendation-card">
+                            <i class="fas fa-chart-line"></i> <strong>Optimalisasi ${metrics.bestEffectivenessChannel.name}</strong> - Efektivitas ${metrics.bestEffectivenessChannel.effectiveness}% (tertinggi).
+                        </div>
+                        <div class="recommendation-card">
+                            <i class="fas fa-chart-line"></i> <strong>Perbanyak Konten Mandiri</strong> - Reach ${(metrics.avgReachMandiri/metrics.avgReachRepost).toFixed(1)}x lebih tinggi.
+                        </div>
+                        <div class="recommendation-card">
+                            <i class="fas fa-chart-line"></i> <strong>Replikasi Konten Sukses</strong> - #${metrics.topKonten[0]?.no}, #${metrics.topKonten[1]?.no}, #${metrics.topKonten[2]?.no}.
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-table"></i> Detail Engagement Konten</h3><span class="badge">${engagementData.length} entri</span></div>
+                        <div class="table-responsive" style="max-height: 160px;">
+                            <table style="width:100%">
+                                <thead>
+                                    <tr><th>Id</th><th>Tgl</th><th>Channel</th><th>Metode</th><th>IG</th><th>FB</th><th>X</th><th>Total</th><th>Performa</th>  </tr>
+                                </thead>
+                                <tbody id="tableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="url-info">
+                    <i class="fas fa-link"></i> Sumber: Google Apps Script - Sheet ENGAGEMENT | Formula: (Avg Reach / Follower) × 100%
+                </div>
+            `;
+            
+            document.getElementById('dashboard-content').innerHTML = html;
+            
+            // Chart Reach dengan ukuran lebih kecil untuk 1 halaman
+            if (currentCharts.reachChart) currentCharts.reachChart.destroy();
+            const ctx = document.getElementById('reachChart').getContext('2d');
+            currentCharts.reachChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: metrics.chartLabels,
+                    datasets: [
+                        { label: 'IG', data: metrics.igData, borderColor: '#E4405F', tension: 0.2, fill: false, pointRadius: 2, pointBackgroundColor: '#E4405F', borderWidth: 1.5 },
+                        { label: 'FB', data: metrics.fbData, borderColor: '#1877F2', tension: 0.2, fill: false, pointRadius: 2, pointBackgroundColor: '#1877F2', borderWidth: 1.5 },
+                        { label: 'X', data: metrics.xData, borderColor: '#000000', tension: 0.2, fill: false, pointRadius: 2, pointBackgroundColor: '#000000', borderWidth: 1.5 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 9 } } }
+                    },
+                    scales: { 
+                        y: { beginAtZero: true, title: { display: true, text: 'Reach', font: { size: 8 } }, ticks: { font: { size: 8 } } }, 
+                        x: { ticks: { maxRotation: 45, minRotation: 45, autoSkip: true, maxTicksLimit: 10, font: { size: 7 } } } 
+                    }
+                }
+            });
+            
+            // Tabel
+            function getSignalClass(performa) {
+                if (!performa || performa === 'No Data') return 'signal-abu';
+                if (performa === 'High Penetration') return 'signal-hijau';
+                if (performa === 'Standard Delivery') return 'signal-kuning';
+                if (performa === 'Narrow Reach') return 'signal-merah';
+                return 'signal-abu';
+            }
+            
+            let tableHtml = '';
+            engagementData.forEach(item => {
+                const totalReach = item.ig_reach + item.fb_reach + item.x_reach;
+                const performa = item.ig_performa !== "No Data" ? item.ig_performa : (item.fb_performa !== "No Data" ? item.fb_performa : item.x_performa);
+                tableHtml += `
+                    <tr>
+                        <td style="text-align:center;">${item.no}</td>
+                        <td>${item.tanggal.slice(0,5)}</td>
+                        <td>${item.channel === 'IG/FB' ? 'IG/FB' : (item.channel === 'X' ? 'X' : 'WA')}</td>
+                        <td>${item.metode === 'Mandiri' ? 'M' : 'R'}</td>
+                        <td style="text-align:right;">${item.ig_reach.toLocaleString()}</td>
+                        <td style="text-align:right;">${item.fb_reach.toLocaleString()}</td>
+                        <td style="text-align:right;">${item.x_reach.toLocaleString()}</td>
+                        <td style="text-align:right; font-weight:bold;">${totalReach.toLocaleString()}</td>
+                        <td><span class="${getSignalClass(performa)}">${performa === 'Standard Delivery' ? 'Std' : (performa === 'Narrow Reach' ? 'Narr' : (performa === 'High Penetration' ? 'High' : '-'))}</span></td>
+                    </tr>
+                `;
+            });
+            const tableBody = document.getElementById('tableBody');
+            if (tableBody) tableBody.innerHTML = tableHtml;
+        }
+        
+        // ==================== EXPORT PDF 1 HAMALAN A4 ====================
+        async function exportToPDF() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const container = document.getElementById('dashboardContainer');
+            
+            loadingOverlay.style.display = 'flex';
+            
+            try {
+                // Tambahkan class pdf-one-page untuk kompresi 1 halaman
+                container.classList.add('pdf-one-page');
+                
+                // Tunggu sebentar agar style baru diterapkan
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                // Capture dengan html2canvas
+                const canvas = await html2canvas(container, {
+                    scale: 2.2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    windowWidth: container.scrollWidth,
+                    windowHeight: container.scrollHeight
+                });
+                
+                // Kembalikan class asli
+                container.classList.remove('pdf-one-page');
+                
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                
+                // Ukuran A4 dalam mm
+                const pdfWidth = 210;
+                const pdfHeight = 297;
+                
+                // Hitung dimensi gambar agar muat dalam 1 halaman
+                const imgWidthMm = pdfWidth;
+                const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+                
+                // Jika gambar lebih tinggi dari halaman, skala ulang agar muat
+                let finalImgWidth = imgWidthMm;
+                let finalImgHeight = imgHeightMm;
+                let positionY = 0;
+                
+                if (imgHeightMm > pdfHeight) {
+                    // Hitung skala agar muat dalam 1 halaman
+                    const scale = pdfHeight / imgHeightMm;
+                    finalImgWidth = imgWidthMm * scale;
+                    finalImgHeight = pdfHeight;
+                    positionY = 0;
+                }
+                
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                pdf.addImage(imgData, 'PNG', (pdfWidth - finalImgWidth) / 2, positionY, finalImgWidth, finalImgHeight);
+                
+                pdf.save(`Publikasi_Dashboard_1Halaman_${new Date().toISOString().slice(0,10)}.pdf`);
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');
+                container.classList.remove('pdf-one-page');
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+        
+        // Fungsi refresh manual
+        async function refreshData() {
+            updateStatus('loading', 'Jangan lupa bersyukur...');
+            const success = await fetchDataFromGoogleSheet();
+            if (success && engagementData.length > 0) {
+                renderDashboard();
+                updateStatus('online', 'Alhamdulillah Data sudah diperbarui');
+            } else {
+                alert('Gagal euy memperbarui data. Periksa koneksi dan sheet.');
+                updateStatus('error', 'Gagal refresh euy');
+            }
+        }
+        
+        async function init() {
+            updateStatus('loading', 'Memuat Data dari Server...');
+            const success = await fetchDataFromGoogleSheet();
+            if (success && engagementData.length > 0) {
+                renderDashboard();
+            } else {
+                document.getElementById('dashboard-content').innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
+                        <h3>Gagal Memuat Data</h3>
+                        <p>Dashboard tidak dapat mengambil data dari Google Sheet ENGAGEMENT.</p>
+                        <button onclick="refreshData()" style="margin-top: 15px; padding: 8px 16px; background: #ff9800; border: none; border-radius: 8px; cursor: pointer;">
+                            <i class="fas fa-sync-alt"></i> Coba Lagi
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Event listener untuk tombol export PDF
+        document.getElementById('exportPdfBtn').addEventListener('click', exportToPDF);
+        
+        init();
+    </script>
+</body>
+</html>
