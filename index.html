@@ -77,7 +77,7 @@
         .hero-stat-value { font-size: 28px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
         .hero-stat-label { font-size: 11px; opacity: 0.8; margin-top: 5px; letter-spacing: 0.5px; }
         
-        /* Kartu tambahan untuk Squad dan Acara */
+        /* Kartu tambahan untuk Squad, Acara, dan EA */
         .extra-card {
             text-align: left;
             padding: 12px 18px;
@@ -330,6 +330,17 @@
                     <div class="extra-card-title"><i class="fas fa-calendar-day"></i> Acara Hari Ini</div>
                     <div id="eventsList" class="extra-card-list">Memuat...</div>
                 </div>
+
+                <!-- Kartu tambahan: EA Bogor (Employee Advocacy) -->
+                <div class="extra-card" id="eaCard">
+                    <div class="extra-card-title"><i class="fas fa-chart-line"></i> EMPLOYEE ADVOCACY</div>
+                    <div id="eaStats" class="extra-card-list">
+                        <div class="extra-card-list-item"><span>⭐ Bogor</span><span id="eaBogor">--%</span></div>
+                        <div class="extra-card-list-item"><span>📊 Nasional</span><span id="eaNasional">--%</span></div>
+                        <div class="extra-card-list-item"><span>🟢 Regional Jabar</span><span id="eaRegional">--%</span></div>
+                        <div class="extra-card-list-item"><span>📅 Periode</span><span id="eaPeriode">--</span></div>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -414,6 +425,7 @@
         
         // ==================== KONFIGURASI ====================
         const API_URL = 'https://script.google.com/macros/s/AKfycbywHucFlh5aJAPbVMUWGA_REGi9lrax2IjYMbPtHJoMTIYqIriHeRFnjygQMbICNJphhg/exec';
+        const EA_API_URL = 'https://script.google.com/macros/s/AKfycbzjKzOok3BQvix2lM1JEIei_ji93ZrJR5HzwgQrDXGwbIWlrEGdFcXSogJl6xgwBGuVUw/exec';
         
         let dashboardData = { 
             layanan: [], channel: [], rataRata: [], dampak: [], hotspot: [], aduan: [],
@@ -743,6 +755,29 @@
             } catch (error) { console.error(`Error ${sheetName}:`, error); return null; }
         }
         
+        // Fungsi untuk mengambil data EA dari Google Sheets
+        async function fetchEAData() {
+            try {
+                const response = await fetch(EA_API_URL);
+                const data = await response.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    const last = data[data.length - 1];
+                    document.getElementById('eaBogor').innerHTML = `${last.bogorPercent || 0}%`;
+                    document.getElementById('eaNasional').innerHTML = `${last.avgNasional || 0}%`;
+                    document.getElementById('eaRegional').innerHTML = last.avgRegional ? `${last.avgRegional}%` : 'N/A';
+                    document.getElementById('eaPeriode').innerHTML = data.length;
+                } else {
+                    document.getElementById('eaBogor').innerHTML = '0%';
+                    document.getElementById('eaNasional').innerHTML = '0%';
+                    document.getElementById('eaRegional').innerHTML = 'N/A';
+                    document.getElementById('eaPeriode').innerHTML = '0';
+                }
+            } catch (err) {
+                console.error('Gagal ambil data EA:', err);
+                document.getElementById('eaBogor').innerHTML = 'error';
+            }
+        }
+        
         async function fetchAllData() {
             try {
                 const sheets = ['LAYANAN', 'CHANNEL', 'RATA_RATA', 'DAMPAK_RISIKO', 'HOTSPOT', 'ADUAN', 'PENYULUHAN', 'SKM', 'SKPL_DATA', 'CVC_DATA', 'PUBLIKASI', 'FORENSIK', 'STAKEHOLDER', 'SQUAD', 'REMINDERS'];
@@ -783,7 +818,9 @@
                 document.getElementById('last-update').innerText = new Date().toLocaleDateString('id-ID');
                 renderDashboard();
                 updateHeroSection();
-                updateHeroSquadAndEvents(); // update kartu squad & acara
+                updateHeroSquadAndEvents();
+                // Ambil data EA
+                fetchEAData();
             } catch (error) {
                 console.error(error);
                 useDemoData = true;
@@ -793,6 +830,7 @@
                 renderDashboard();
                 updateHeroSection();
                 updateHeroSquadAndEvents();
+                fetchEAData();
             }
         }
         
@@ -960,6 +998,11 @@
             const endDate = document.getElementById('end-date');
             if (this.value === 'custom') { customDates.style.display = 'inline-block'; endDate.style.display = 'inline-block'; }
             else { customDates.style.display = 'none'; endDate.style.display = 'none'; }
+        });
+        
+        // Event listener untuk kartu EA
+        document.getElementById('eaCard').addEventListener('click', function() {
+            window.location.href = 'sub-dashboard/EA.html';
         });
         
         fetchAllData();
