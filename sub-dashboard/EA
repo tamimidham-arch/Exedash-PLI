@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Advocacy BC Bogor - Cloud Sync</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2eaf5 100%);
+            margin: 0;
+            padding: 20px;
+            color: #1e2a3e;
+        }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .black-header {
+            background: #1a1a2e;
+            padding: 16px 24px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .black-header h1 { margin: 0; font-size: 1.6rem; color: #f5a623; }
+        .black-header p { margin: 8px 0 0; color: #aaa; font-size: 0.8rem; }
+        .sync-status {
+            background: #e8f5e9;
+            border-radius: 20px;
+            padding: 10px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .online { color: #2e7d32; }
+        .offline { color: #c62828; }
+        .card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .upload-area {
+            border: 2px dashed #bdd3e8;
+            border-radius: 20px;
+            background: #fafcff;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .upload-area:hover { background: #eef3fc; border-color: #2c6e9e; }
+        input[type="file"] { display: none; }
+        .btn {
+            background: #1f6392;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn-primary { background: #1f6392; }
+        .btn-primary:hover { background: #0e4b72; }
+        .btn-outline { background: white; border: 1px solid #1f6392; color: #1f6392; }
+        .btn-sync { background: #2e7d32; }
+        .file-info {
+            background: #eef2f7;
+            border-radius: 16px;
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .status { font-size: 0.85rem; margin-top: 12px; }
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            flex: 1;
+            text-align: center;
+            background: #f1f6fd;
+            border-radius: 16px;
+            padding: 12px;
+        }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: #0b3b5f; }
+        .stat-label { font-size: 0.7rem; color: #4a627a; }
+        .bogor-badge {
+            background: #fff7e0;
+            border-left: 5px solid #f5a623;
+            padding: 14px 18px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+        }
+        .chart-container { height: 420px; margin: 20px 0; }
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 350px;
+            overflow-y: auto;
+            border-radius: 16px;
+            border: 1px solid #e2edf7;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e9edf2; }
+        th { background: #e9f0f6; position: sticky; top: 0; }
+        .trend-up { color: #2e7d32; }
+        .trend-down { color: #c62828; }
+        .footer-note { font-size: 0.7rem; text-align: center; margin-top: 20px; color: #7e8c9e; }
+        @media (max-width: 700px) { body { padding: 12px; } .stat-value { font-size: 1.3rem; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="black-header">
+        <h1>🔈🗯️ EMPLOYEE ADVOCACY BC BOGOR</h1>
+        <p>KPPBC Tipe Madya Pabean A Bogor | Cloud Synced </p>
+    </div>
+
+    <div class="sync-status">
+        <span>☁️ <span id="connectionStatus">Mengecek koneksi...</span></span>
+        <button class="btn-sync" id="refreshBtn" style="padding: 5px 15px;">🔄 Refresh Data</button>
+    </div>
+
+    <div class="card">
+        <div class="upload-area" id="uploadArea">
+            📂 Klik atau taruh file PDF disini<br>
+            <span style="font-size:0.75rem;">Lampiran Rekap Capaian EA (format DJBC)</span>
+            <input type="file" id="pdfInput" accept="application/pdf">
+            <div><button class="btn btn-outline" id="selectFileBtn">📄 Pilih File PDF</button></div>
+        </div>
+        <div id="fileInfoArea" style="display:none;" class="file-info">
+            <span id="fileNameDisplay">📄 </span>
+            <button class="btn btn-primary" id="processBtn">➕ TAMBAHKAN PERIODE & SYNC</button>
+        </div>
+        <div id="uploadStatus" class="status">📌 Pilih file PDF, data akan tersimpan di Google Sheets.</div>
+    </div>
+
+    <div id="resultPanel" style="display: none;">
+        <div class="card">
+            <div class="stats-row" id="summaryStats"></div>
+            <div class="bogor-badge" id="bogorHighlight"></div>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+            <p style="font-size:0.7rem; text-align:center;">📈 ⭐ Bogor | 🔵 Rata-rata Nasional | 🟢 Rata-rata Regional Jabar</p>
+            <div class="table-wrapper">
+                <table id="historyTable">
+                    <thead>
+                        <tr><th>Periode</th><th>Tanggal Upload</th><th>⭐ Bogor (%)</th><th>Nasional (%)</th><th>Regional (%)</th><th>Selisih vs Regional</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="footer-note">⚡ Data tersimpan di Google Sheets. Buka dari perangkat manapun.</div>
+</div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+    // 🔴 URL WEBAPP BARU  🔴
+    const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzjKzOok3BQvix2lM1JEIei_ji93ZrJR5HzwgQrDXGwbIWlrEGdFcXSogJl6xgwBGuVUw/exec';
+    
+    let chartInstance = null;
+    let selectedFile = null;
+
+    const REGIONAL_KEYWORDS = [
+        'kanwil djbc jawa barat',
+        'kppbc tipe madya pabean a bandung',
+        'kppbc tipe madya pabean c cirebon',
+        'kppbc tipe madya pabean c tasikmalaya',
+        'kppbc tipe madya pabean a purwakarta'
+    ];
+
+    function calculateRegionalAverage(allData) {
+        const regionalUnits = allData.filter(item => {
+            const nama = item.nama.toLowerCase();
+            return REGIONAL_KEYWORDS.some(keyword => nama.includes(keyword));
+        });
+        if (regionalUnits.length === 0) return null;
+        const sum = regionalUnits.reduce((acc, curr) => acc + curr.persen, 0);
+        return parseFloat((sum / regionalUnits.length).toFixed(2));
+    }
+
+    function findBogor(allData) {
+        let bogor = allData.find(d => d.nama.toLowerCase().includes('kppbc') && d.nama.toLowerCase().includes('bogor'));
+        if (!bogor) bogor = allData.find(d => d.nama.toLowerCase().includes('bogor') && (d.nama.toLowerCase().includes('pabean') || d.nama.toLowerCase().includes('madya')));
+        if (!bogor) bogor = allData.find(d => d.nama.toLowerCase().includes('bogor'));
+        return bogor;
+    }
+
+    async function fetchDataFromCloud() {
+        try {
+            const response = await fetch(WEBAPP_URL);
+            if (!response.ok) throw new Error('Gagal fetch');
+            const data = await response.json();
+            document.getElementById('connectionStatus').innerHTML = '✅ Terhubung ke Server, Alhamdulillah';
+            document.getElementById('connectionStatus').className = 'online';
+            console.log('Data dari cloud:', data);
+            return Array.isArray(data) ? data : [];
+        } catch (err) {
+            console.error(err);
+            document.getElementById('connectionStatus').innerHTML = '⚠️ Gagal koneksi';
+            document.getElementById('connectionStatus').className = 'offline';
+            return [];
+        }
+    }
+
+    async function saveToCloud(record) {
+        try {
+            await fetch(WEBAPP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(record)
+            });
+            await new Promise(r => setTimeout(r, 1000));
+            return { success: true };
+        } catch (err) {
+            return { success: false };
+        }
+    }
+
+    async function extractFromPDF(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            fullText += ' ' + textContent.items.map(t => t.str).join(' ');
+        }
+        
+        const regex = /(\d+)\s+([A-Za-z0-9\s,\.\(\)\-\&]+?)\s+(\d+(?:\.\d+)?%)\s+(\d+)/g;
+        let matches = [];
+        let match;
+        while ((match = regex.exec(fullText)) !== null) {
+            matches.push({
+                no: parseInt(match[1]),
+                nama: match[2].trim().replace(/\s+/g, ' '),
+                persen: parseFloat(match[3].replace('%', '')),
+                jumlah: parseInt(match[4])
+            });
+        }
+        
+        if (matches.length < 20) {
+            const tokens = fullText.split(/\s+/);
+            for (let i = 0; i < tokens.length; i++) {
+                if (tokens[i].match(/^\d+$/) && parseInt(tokens[i]) < 200) {
+                    let nomor = parseInt(tokens[i]);
+                    let j = i + 1;
+                    let namaTokens = [];
+                    let persenToken = null, jumlahToken = null;
+                    while (j < tokens.length) {
+                        if (tokens[j].match(/\d+(?:\.\d+)?%/)) {
+                            persenToken = tokens[j];
+                            j++;
+                            if (j < tokens.length && tokens[j].match(/^\d+$/)) {
+                                jumlahToken = tokens[j];
+                            }
+                            break;
+                        } else {
+                            namaTokens.push(tokens[j]);
+                            j++;
+                        }
+                    }
+                    if (persenToken && jumlahToken) {
+                        let nama = namaTokens.join(' ').replace(/[0-9]+%/g, '').trim();
+                        if (nama.length > 2) {
+                            matches.push({
+                                no: nomor,
+                                nama: nama,
+                                persen: parseFloat(persenToken.replace('%', '')),
+                                jumlah: parseInt(jumlahToken)
+                            });
+                        }
+                        i = j;
+                    }
+                }
+            }
+        }
+        
+        const uniqueMap = new Map();
+        for (let item of matches) {
+            if (!uniqueMap.has(item.no) && item.nama && !isNaN(item.persen)) {
+                uniqueMap.set(item.no, item);
+            }
+        }
+        const allData = Array.from(uniqueMap.values());
+        
+        const bogor = findBogor(allData);
+        if (!bogor) throw new Error('Tidak menemukan Bea Cukai Bogor');
+        
+        const avgNasional = allData.reduce((sum, d) => sum + d.persen, 0) / allData.length;
+        const avgRegional = calculateRegionalAverage(allData);
+        
+        return {
+            bogorPercent: bogor.persen,
+            bogorJumlah: bogor.jumlah,
+            bogorNama: bogor.nama,
+            avgNasional: parseFloat(avgNasional.toFixed(2)),
+            avgRegional: avgRegional,
+            totalUnits: allData.length
+        };
+    }
+
+    function renderDashboard(history) {
+        console.log('History untuk render:', history);
+        
+        if (!history || history.length === 0) {
+            document.getElementById("resultPanel").style.display = "none";
+            return;
+        }
+        document.getElementById("resultPanel").style.display = "block";
+        
+        // Sort by upload date
+        const sorted = [...history].sort((a,b) => {
+            const dateA = new Date(a.uploadDate);
+            const dateB = new Date(b.uploadDate);
+            return dateA - dateB;
+        });
+        
+        const last = sorted[sorted.length-1];
+        
+        // Pastikan angka valid
+        const bogorPercent = parseFloat(last.bogorPercent) || 0;
+        const avgNasional = parseFloat(last.avgNasional) || 0;
+        const avgRegional = last.avgRegional ? parseFloat(last.avgRegional) : null;
+        
+        const diffNasional = (bogorPercent - avgNasional).toFixed(2);
+        const diffRegional = avgRegional ? (bogorPercent - avgRegional).toFixed(2) : 'N/A';
+        const trend = sorted.length > 1 ? (bogorPercent - (parseFloat(sorted[sorted.length-2].bogorPercent) || 0)).toFixed(2) : 0;
+        
+        document.getElementById("summaryStats").innerHTML = `
+            <div class="stat-card"><div class="stat-value">${sorted.length}</div><div class="stat-label">Periode</div></div>
+            <div class="stat-card"><div class="stat-value">${bogorPercent}%</div><div class="stat-label">Bogor Terbaru</div></div>
+            <div class="stat-card"><div class="stat-value">${avgNasional}%</div><div class="stat-label">Rata-rata Nasional</div></div>
+            <div class="stat-card"><div class="stat-value">${avgRegional ? avgRegional+'%' : 'N/A'}</div><div class="stat-label">Rata-rata Regional</div></div>
+        `;
+        
+        document.getElementById("bogorHighlight").innerHTML = `
+            <strong>⭐ KPPBC Tipe Madya Pabean A Bogor</strong><br>
+            📊 Partisipasi terbaru: <strong>${bogorPercent}%</strong><br>
+            📉 vs Nasional: <strong>${bogorPercent > avgNasional ? '📈 DIATAS' : '📉 DIBAWAH'}</strong> (${diffNasional >= 0 ? '+' : ''}${diffNasional}%)<br>
+            🟢 vs Regional Jabar: <strong>${avgRegional ? (bogorPercent > avgRegional ? '📈 DIATAS' : '📉 DIBAWAH') : 'N/A'}</strong> ${avgRegional ? `(${diffRegional >= 0 ? '+' : ''}${diffRegional}%)` : ''}<br>
+            🔄 Perubahan: <strong class="${trend > 0 ? 'trend-up' : (trend < 0 ? 'trend-down' : '')}">${trend > 0 ? '▲ +' + trend : (trend < 0 ? '▼ ' + trend : '▬ 0')}%</strong>
+        `;
+        
+        const periods = sorted.map((_, i) => `P${i+1}`);
+        const bogorValues = sorted.map(h => parseFloat(h.bogorPercent) || 0);
+        const nasionalValues = sorted.map(h => parseFloat(h.avgNasional) || 0);
+        const regionalValues = sorted.map(h => h.avgRegional ? parseFloat(h.avgRegional) : null);
+        
+        if (chartInstance) chartInstance.destroy();
+        
+        chartInstance = new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: periods,
+                datasets: [
+                    {
+                        label: '⭐ Bogor',
+                        data: bogorValues,
+                        borderColor: '#f5a623',
+                        borderWidth: 3.5,
+                        pointRadius: 8,
+                        pointBackgroundColor: '#f5a623',
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2.5,
+                        pointStyle: 'star',
+                        tension: 0.2
+                    },
+                    {
+                        label: '🔵 Rata-rata Nasional',
+                        data: nasionalValues,
+                        borderColor: '#2c6e9e',
+                        borderWidth: 2.5,
+                        borderDash: [8, 6],
+                        pointRadius: 3,
+                        tension: 0.2,
+                        fill: false
+                    },
+                    {
+                        label: '🟢 Rata-rata Regional Jabar',
+                        data: regionalValues,
+                        borderColor: '#2e7d32',
+                        borderWidth: 2.5,
+                        borderDash: [8, 6],
+                        pointRadius: 3,
+                        tension: 0.2,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                if (ctx.raw === null || ctx.raw === undefined) return null;
+                                return `${ctx.dataset.label}: ${ctx.raw}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: { min: 0, max: 105, title: { display: true, text: 'Partisipasi (%)' } }
+                }
+            }
+        });
+        
+        const tbody = document.getElementById('historyBody');
+        tbody.innerHTML = '';
+        sorted.forEach((rec, i) => {
+            const recBogor = parseFloat(rec.bogorPercent) || 0;
+            const recNasional = parseFloat(rec.avgNasional) || 0;
+            const recRegional = rec.avgRegional ? parseFloat(rec.avgRegional) : null;
+            const selisihRegional = recRegional ? (recBogor - recRegional).toFixed(2) : 'N/A';
+            tbody.innerHTML += `
+                <tr>
+                    <td>Periode ${i+1}</td>
+                    <td>${rec.uploadDate || '-'}</td>
+                    <td><strong>${recBogor}%</strong></td>
+                    <td>${recNasional}%</td>
+                    <td>${recRegional ? recRegional+'%' : 'N/A'}</td>
+                    <td class="${selisihRegional !== 'N/A' && parseFloat(selisihRegional) >= 0 ? 'trend-up' : 'trend-down'}">${selisihRegional !== 'N/A' ? (parseFloat(selisihRegional) >= 0 ? '+' : '') + selisihRegional + '%' : 'N/A'}</td>
+                    <td>${recBogor >= recNasional ? '✅ Diatas nasional' : '⚠️ Dibawah nasional'}</td>
+                </tr>
+            `;
+        });
+    }
+
+    async function addPeriod(file) {
+        const existing = await fetchDataFromCloud();
+        const signature = `${file.name}_${file.size}_${file.lastModified}`;
+        
+        if (existing.some(r => r.fileSignature === signature)) {
+            alert(`⚠️ FILE SUDAH PERNAH DIUPLOAD!\n\n${file.name}`);
+            return false;
+        }
+        
+        document.getElementById("uploadStatus").innerHTML = '⏳ Memproses PDF...';
+        let extracted;
+        try {
+            extracted = await extractFromPDF(file);
+        } catch(e) {
+            alert('Gagal: ' + e.message);
+            document.getElementById("uploadStatus").innerHTML = '❌ ' + e.message;
+            return false;
+        }
+        
+        const newRecord = {
+            fileSignature: signature,
+            fileName: file.name,
+            uploadDate: new Date().toLocaleString('id-ID'),
+            bogorPercent: extracted.bogorPercent,
+            bogorJumlah: extracted.bogorJumlah,
+            bogorNama: extracted.bogorNama,
+            avgNasional: extracted.avgNasional,
+            avgRegional: extracted.avgRegional,
+            totalUnits: extracted.totalUnits
+        };
+        
+        document.getElementById("uploadStatus").innerHTML = '☁️ Menyimpan ke Google Sheets...';
+        await saveToCloud(newRecord);
+        
+        // Tunggu sebentar lalu ambil data terbaru
+        setTimeout(async () => {
+            const updated = await fetchDataFromCloud();
+            renderDashboard(updated);
+            document.getElementById("uploadStatus").innerHTML = `✅ Periode ${updated.length} tersimpan! Bogor: ${extracted.bogorPercent}% | Nasional: ${extracted.avgNasional}% | Regional: ${extracted.avgRegional ? extracted.avgRegional+'%' : 'N/A'}`;
+        }, 1500);
+        
+        return true;
+    }
+
+    // Event handlers
+    const pdfInput = document.getElementById('pdfInput');
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInfoArea = document.getElementById('fileInfoArea');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const processBtn = document.getElementById('processBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    
+    selectFileBtn.onclick = () => pdfInput.click();
+    uploadArea.onclick = () => pdfInput.click();
+    pdfInput.onchange = (e) => {
+        if (e.target.files.length) {
+            selectedFile = e.target.files[0];
+            fileNameDisplay.innerHTML = `📄 ${selectedFile.name} (${(selectedFile.size/1024).toFixed(0)} KB)`;
+            fileInfoArea.style.display = 'flex';
+            document.getElementById("uploadStatus").innerHTML = '✅ File siap. Klik "TAMBAHKAN PERIODE & SYNC"';
+        }
+    };
+    processBtn.onclick = async () => {
+        if (!selectedFile) { alert('Pilih file PDF dulu'); return; }
+        await addPeriod(selectedFile);
+        selectedFile = null;
+        fileInfoArea.style.display = 'none';
+        pdfInput.value = '';
+    };
+    refreshBtn.onclick = async () => {
+        document.getElementById("uploadStatus").innerHTML = '🔄 Menyegarkan data dari cloud...';
+        const data = await fetchDataFromCloud();
+        renderDashboard(data);
+        document.getElementById("uploadStatus").innerHTML = `✅ Data diperbarui (${data.length} periode tersimpan)`;
+    };
+    
+    (async () => {
+        const data = await fetchDataFromCloud();
+        renderDashboard(data);
+    })();
+</script>
+</body>
+</html>
