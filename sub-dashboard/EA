@@ -22,9 +22,34 @@
             border-radius: 20px;
             margin-bottom: 24px;
             text-align: center;
+            position: relative;
         }
         .black-header h1 { margin: 0; font-size: 1.6rem; color: #f5a623; }
         .black-header p { margin: 8px 0 0; color: #aaa; font-size: 0.8rem; }
+        
+        /* Tombol Kembali */
+        .back-button {
+            position: absolute;
+            top: 16px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .back-button:hover {
+            background: rgba(255,255,255,0.35);
+            transform: translateX(-3px);
+        }
+        
         .sync-status {
             background: #e8f5e9;
             border-radius: 20px;
@@ -69,6 +94,11 @@
         .btn-primary:hover { background: #0e4b72; }
         .btn-outline { background: white; border: 1px solid #1f6392; color: #1f6392; }
         .btn-sync { background: #2e7d32; }
+        .btn-back {
+            background: #6c757d;
+            margin-bottom: 15px;
+        }
+        .btn-back:hover { background: #5a6268; }
         .file-info {
             background: #eef2f7;
             border-radius: 16px;
@@ -117,12 +147,15 @@
         .trend-up { color: #2e7d32; }
         .trend-down { color: #c62828; }
         .footer-note { font-size: 0.7rem; text-align: center; margin-top: 20px; color: #7e8c9e; }
-        @media (max-width: 700px) { body { padding: 12px; } .stat-value { font-size: 1.3rem; } }
+        @media (max-width: 700px) { body { padding: 12px; } .stat-value { font-size: 1.3rem; } .back-button { top: 10px; left: 10px; padding: 5px 12px; font-size: 0.7rem; } }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="black-header">
+        <button class="back-button" onclick="window.location.href='index.html'">
+            <i class="fas fa-arrow-left"></i> ← Kembali ke Dashboard
+        </button>
         <h1>🔈🗯️ EMPLOYEE ADVOCACY BC BOGOR</h1>
         <p>KPPBC Tipe Madya Pabean A Bogor | Cloud Synced </p>
     </div>
@@ -168,9 +201,15 @@
 </div>
 
 <script>
+    // Tambahkan FontAwesome untuk ikon
+    const fontAwesomeLink = document.createElement('link');
+    fontAwesomeLink.rel = 'stylesheet';
+    fontAwesomeLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css';
+    document.head.appendChild(fontAwesomeLink);
+
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    // 🔴 URL WEBAPP BARU  🔴
+    // URL WEBAPP 
     const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzjKzOok3BQvix2lM1JEIei_ji93ZrJR5HzwgQrDXGwbIWlrEGdFcXSogJl6xgwBGuVUw/exec';
     
     let chartInstance = null;
