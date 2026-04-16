@@ -62,7 +62,7 @@
             position: relative;
             z-index: 1;
         }
-        /* Kartu statistik asli (Kerugian, Hotspot, Krisis) */
+        /* Kartu statistik asli (Krisis) */
         .hero-stat {
             text-align: center;
             padding: 12px 18px;
@@ -305,7 +305,7 @@
                 </div>
             </div>
             <div class="hero-stats">
-                <!-- Kartu asli: Kerugian, Hotspot, Krisis -->
+                <!-- Kartu asli: Krisis -->
                 <div class="hero-stat">
                     <div class="hero-stat-value" id="hero-krisis">--</div>
                     <div class="hero-stat-label">Krisis Aktif</div>
@@ -903,23 +903,41 @@
             document.getElementById('eventsCard').onclick = () => window.location.href = 'sub-dashboard/squad.html';
         }
         
+        // ==================== FUNGSI UPDATE HERO SECTION YANG DIPERBAIKI ====================
         function updateHeroSection() {
             const totalKerugian = dashboardData.dampak.reduce((s, i) => s + (parseInt(i.Total_Kerugian_Terhindar)||0), 0);
             const hotspotDarurat = dashboardData.hotspot.filter(h => h.Level === 'darurat').length;
             const krisisAktif = dashboardData.forensik.filter(f => (f.Level === 'SUBSTANTIVE' || f.Level === 'CRITICAL') && f.Status !== 'Selesai').length;
-            document.getElementById('hero-kerugian').innerHTML = 'Rp ' + (totalKerugian / 1000000).toFixed(0) + 'jt';
-            document.getElementById('hero-hotspot').innerHTML = hotspotDarurat;
+            
+            // Hanya update element yang ada di HTML (hero-krisis)
             document.getElementById('hero-krisis').innerHTML = krisisAktif;
+            
             let title = '', description = '', actionText = '', actionLink = '';
-            if (krisisAktif > 0) { title = `⚠️ ${krisisAktif} Krisis Komunikasi Aktif`; description = `${krisisAktif} isu dengan level SUBSTANTIVE/CRITICAL perlu ditangani segera.`; actionText = 'Lihat Daftar Krisis'; actionLink = 'sub-dashboard/forensik.html'; }
-            else if (hotspotDarurat > 0) { title = `📍 ${hotspotDarurat} Hotspot Darurat Rokok Ilegal`; description = `${hotspotDarurat} lokasi dengan laporan berulang. Prioritas operasi gabungan.`; actionText = 'Lihat Peta Hotspot'; actionLink = '#'; }
-            else { title = `✅ Situasi Terkendali`; description = `Kerugian terhindar Rp ${(totalKerugian / 1000000).toFixed(0)} juta YTD. Pertahankan strategi.`; actionText = 'Lihat Ringkasan'; actionLink = '#'; }
+            if (krisisAktif > 0) { 
+                title = `⚠️ ${krisisAktif} Krisis Komunikasi Aktif`; 
+                description = `${krisisAktif} isu dengan level SUBSTANTIVE/CRITICAL perlu ditangani segera.`; 
+                actionText = 'Lihat Daftar Krisis'; 
+                actionLink = 'sub-dashboard/forensik.html'; 
+            }
+            else if (hotspotDarurat > 0) { 
+                title = `📍 ${hotspotDarurat} Hotspot Darurat Rokok Ilegal`; 
+                description = `${hotspotDarurat} lokasi dengan laporan berulang. Prioritas operasi gabungan.`; 
+                actionText = 'Lihat Peta Hotspot'; 
+                actionLink = '#'; 
+            }
+            else { 
+                title = `✅ Situasi Terkendali`; 
+                description = `Kerugian terhindar Rp ${(totalKerugian / 1000000).toFixed(0)} juta YTD. Pertahankan strategi.`; 
+                actionText = 'Lihat Ringkasan'; 
+                actionLink = '#'; 
+            }
             document.getElementById('hero-title').innerHTML = title;
             document.getElementById('hero-description').innerHTML = description;
             const btn = document.getElementById('hero-action-btn');
             btn.innerHTML = `<i class="fas fa-eye"></i> ${actionText}`;
             btn.onclick = () => { if (actionLink === 'sub-dashboard/forensik.html') window.location.href = actionLink; else document.getElementById('row-2')?.scrollIntoView({ behavior: 'smooth' }); };
         }
+        // ==================== AKHIR PERBAIKAN ====================
         
         function renderDashboard() {
             const layanan = dashboardData.layanan;
