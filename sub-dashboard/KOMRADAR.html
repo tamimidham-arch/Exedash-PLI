@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar Komunikasi DJBC - Dual Radar</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: #0a0e1a;
+            color: #e0e6f0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1500px; margin: 0 auto; }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0d1b2a, #1b2d45);
+            padding: 20px 30px;
+            border-radius: 20px;
+            border: 1px solid #2a3f5a;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #ff6b35, #f7931e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header .subtitle {
+            color: #8aa4c8;
+            font-size: 0.85rem;
+        }
+        .header .date-badge {
+            background: #1a2d44;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            border: 1px solid #2a4a6a;
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid #2a4a6a;
+            color: #8aa4c8;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+
+        /* Upload & Status */
+        .upload-card {
+            background: #111d2e;
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid #1a2d44;
+            margin-bottom: 24px;
+        }
+        .upload-area {
+            border: 2px dashed #1a2d44;
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            background: #0d1a2a;
+        }
+        .upload-area:hover {
+            border-color: #f7931e;
+            background: #111d2e;
+        }
+        .upload-area .icon { font-size: 2.5rem; margin-bottom: 8px; }
+        .upload-area .highlight { color: #f7931e; font-weight: 600; }
+        input[type="file"] { display: none; }
+        
+        .file-info {
+            display: none;
+            background: #0d1a2a;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-top: 15px;
+            border: 1px solid #1a2d44;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .file-info.show { display: flex; }
+        
+        .btn {
+            padding: 10px 28px;
+            border-radius: 30px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.9rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f7931e, #ff6b35);
+            color: #fff;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(247,147,30,0.3); }
+        .btn-secondary {
+            background: #1a2d44;
+            color: #8aa4c8;
+            border: 1px solid #2a4a6a;
+        }
+        .btn-secondary:hover { background: #2a3d5a; color: #fff; }
+        .btn-success {
+            background: #28a745;
+            color: #fff;
+        }
+        .btn-success:hover { background: #218838; }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px 0;
+            gap: 10px;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-dot.online { background: #28a745; box-shadow: 0 0 10px rgba(40,167,69,0.5); }
+        .status-dot.offline { background: #dc3545; box-shadow: 0 0 10px rgba(220,53,69,0.5); }
+        .status-dot.warning { background: #ffc107; box-shadow: 0 0 10px rgba(255,193,7,0.5); }
+
+        /* Period Selector Global */
+        .global-period-selector {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            background: #0d1a2a;
+            border-radius: 12px;
+            border: 1px solid #1a2d44;
+        }
+        .global-period-selector label {
+            color: #8aa4c8;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .global-period-selector select {
+            background: #1a2d44;
+            color: #e0e6f0;
+            border: 1px solid #2a4a6a;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .global-period-selector select:focus {
+            outline: none;
+            border-color: #f7931e;
+        }
+        .global-period-selector .badge-period {
+            background: #1a2d44;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: #f7931e;
+        }
+
+        /* Dual Radar Grid */
+        .dual-radar-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 1100px) {
+            .dual-radar-grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: #111d2e;
+            border-radius: 20px;
+            padding: 20px 24px;
+            border: 1px solid #1a2d44;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #1a2d44;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .card-header h3 {
+            font-size: 1rem;
+            color: #8aa4c8;
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .card-header .badge {
+            background: #1a2d44;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: #f7931e;
+        }
+        .card-header .period-tag {
+            background: #1a2d44;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: #8aa4c8;
+        }
+        .card-header .period-tag.harian { border-left: 3px solid #f7931e; }
+        .card-header .period-tag.bulanan { border-left: 3px solid #2c6e9e; }
+
+        .radar-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+
+        .radar-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .radar-stat-item {
+            text-align: center;
+            padding: 6px 16px;
+            background: #0d1a2a;
+            border-radius: 10px;
+        }
+        .radar-stat-item .value {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .radar-stat-item .label {
+            font-size: 0.6rem;
+            color: #8aa4c8;
+        }
+        .radar-stat-item.krisis .value { color: #dc3545; }
+        .radar-stat-item.waspada .value { color: #ffc107; }
+        .radar-stat-item.selaras .value { color: #28a745; }
+
+        .topic-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        .topic-tag {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.6rem;
+            font-weight: 600;
+        }
+        .topic-tag.krisis { background: #dc3545; color: #fff; }
+        .topic-tag.waspada { background: #ffc107; color: #000; }
+        .topic-tag.selaras { background: #28a745; color: #fff; }
+
+        /* Matrix Table */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        .matrix-table th {
+            text-align: left;
+            padding: 8px 6px;
+            color: #8aa4c8;
+            font-weight: 400;
+            border-bottom: 1px solid #1a2d44;
+        }
+        .matrix-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #0d1a2a;
+        }
+        .status-tag {
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+        .status-tag.red { background: #dc3545; color: #fff; }
+        .status-tag.yellow { background: #ffc107; color: #000; }
+        .status-tag.green { background: #28a745; color: #fff; }
+
+        /* Action Guide */
+        .action-guide {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .action-item {
+            padding: 12px;
+            background: #0d1a2a;
+            border-radius: 12px;
+            text-align: center;
+            border-left: 4px solid #2a4a6a;
+        }
+        .action-item.level-1 { border-left-color: #28a745; }
+        .action-item.level-2 { border-left-color: #ffc107; }
+        .action-item.level-3 { border-left-color: #dc3545; }
+        .action-item .level {
+            font-size: 0.55rem;
+            color: #8aa4c8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .action-item .title { font-weight: 600; margin: 4px 0; font-size: 0.85rem; }
+        .action-item .desc { font-size: 0.65rem; color: #8aa4c8; }
+
+        /* History Table */
+        .history-table-wrap {
+            overflow-x: auto;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .history-table-wrap table { font-size: 0.7rem; }
+        .history-table-wrap th, 
+        .history-table-wrap td { 
+            padding: 6px 10px; 
+            border-bottom: 1px solid #0d1a2a;
+        }
+        .history-table-wrap th {
+            color: #8aa4c8;
+            font-weight: 400;
+            border-bottom: 1px solid #1a2d44;
+            position: sticky;
+            top: 0;
+            background: #111d2e;
+        }
+
+        .period-btn {
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: 1px solid #1a2d44;
+            background: transparent;
+            color: #8aa4c8;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: 0.3s;
+        }
+        .period-btn.active {
+            background: #f7931e;
+            color: #0a0e1a;
+            border-color: #f7931e;
+        }
+        .period-btn:hover:not(.active) {
+            border-color: #f7931e;
+            color: #fff;
+        }
+
+        .period-selector-wrap {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .loading.show { display: block; }
+        .spinner {
+            border: 3px solid #1a2d44;
+            border-top-color: #f7931e;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #4a6a8a;
+            font-size: 0.7rem;
+            border-top: 1px solid #1a2d44;
+            margin-top: 20px;
+        }
+
+        .alert-banner {
+            background: linear-gradient(135deg, #1a0a0a, #2d1515);
+            border: 1px solid #dc3545;
+            border-radius: 12px;
+            padding: 14px 20px;
+            display: none;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .alert-banner.show { display: flex; animation: pulse-alert 2s infinite; }
+        @keyframes pulse-alert {
+            0%, 100% { box-shadow: 0 0 20px rgba(220,53,69,0.2); }
+            50% { box-shadow: 0 0 40px rgba(220,53,69,0.4); }
+        }
+        .alert-banner .icon { font-size: 1.8rem; }
+        .alert-banner .message { flex: 1; }
+        .alert-banner .message .title { font-weight: 700; color: #dc3545; }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #0d1a2a; }
+        ::-webkit-scrollbar-thumb { background: #2a4a6a; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3a5a7a; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1>📡 RADAR KOMUNIKASI VERTIKAL DJBC</h1>
+            <div class="subtitle">Dual Radar · Harian & Bulanan · Gap Analysis Pusat vs Daerah</div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <span class="date-badge" id="currentDate">📅 13 Juli 2026</span>
+            <a href="../index.html" class="back-btn">← Kembali</a>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="upload-card">
+        <div class="upload-area" id="uploadArea">
+            <div class="icon">📄</div>
+            <div class="text">
+                <span class="highlight">Upload Laporan PDF</span><br>
+                <span style="font-size:0.8rem; color:#5a7a9a;">Laporan BC Media / Analisis Isu Publik (format DJBC)</span>
+            </div>
+            <input type="file" id="pdfInput" accept="application/pdf">
+            <div style="margin-top: 10px;">
+                <button class="btn btn-secondary" id="selectFileBtn">📂 Pilih File PDF</button>
+            </div>
+        </div>
+        <div class="file-info" id="fileInfoArea">
+            <span id="fileNameDisplay">📄 </span>
+            <div>
+                <button class="btn btn-primary" id="processBtn">🔍 ANALISIS GAP & SYNC</button>
+                <button class="btn btn-secondary" id="clearFileBtn" style="padding: 8px 16px;">✕</button>
+            </div>
+        </div>
+        <div class="status-bar">
+            <span id="connectionStatus">
+                <span class="status-dot warning"></span> Mengecek koneksi...
+            </span>
+            <span id="uploadStatus" style="color:#5a7a9a; font-size:0.8rem;">📌 Upload PDF untuk analisis gap komunikasi</span>
+            <button class="btn btn-secondary" id="refreshBtn" style="padding: 6px 18px;">🔄 Refresh</button>
+        </div>
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <span style="color:#8aa4c8;">Memproses data...</span>
+        </div>
+    </div>
+
+    <!-- Global Period Selector -->
+    <div class="global-period-selector">
+        <label>📅 Pilih Periode Analisis:</label>
+        <select id="globalPeriodSelect">
+            <option value="latest">Terbaru</option>
+        </select>
+        <span class="badge-period" id="totalPeriods">Total: 0 periode</span>
+        <span style="color:#5a7a9a; font-size:0.75rem; margin-left:auto;">
+            ⚡ Harian: <span style="color:#f7931e;">●</span> · Bulanan: <span style="color:#2c6e9e;">●</span>
+        </span>
+    </div>
+
+    <!-- Alert Banner -->
+    <div class="alert-banner" id="alertBanner">
+        <div class="icon">🚨</div>
+        <div class="message">
+            <div class="title">KRISIS KOMUNIKASI TERDETEKSI!</div>
+            <div style="font-size:0.8rem; color:#8aa4c8;" id="alertMessage">Gap tinggi terdeteksi. Aktifkan Mode Shielding.</div>
+        </div>
+        <button class="btn btn-danger" style="padding: 6px 16px; background:#dc3545; color:#fff; border:none; border-radius:20px; cursor:pointer;" onclick="document.getElementById('alertBanner').classList.remove('show')">Tutup</button>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="resultPanel" style="display: none;">
+        <!-- DUAL RADAR GRID -->
+        <div class="dual-radar-grid">
+            <!-- RADAR HARIAN -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>📊 RADAR HARIAN</h3>
+                    <div>
+                        <span class="period-tag harian" id="harianPeriod">Periode: 3-9 Jul 2026</span>
+                        <span class="badge" id="harianCount">4 isu</span>
+                    </div>
+                </div>
+                <div class="radar-container">
+                    <canvas id="radarHarian"></canvas>
+                </div>
+                <div class="topic-legend" id="harianLegend"></div>
+                <div class="radar-stats">
+                    <div class="radar-stat-item" id="harianGap">
+                        <div class="value" style="color:#f7931e;">+2.0</div>
+                        <div class="label">Gap Index</div>
+                    </div>
+                    <div class="radar-stat-item" id="harianStatus">
+                        <div class="value" style="color:#ffc107;">⚠️</div>
+                        <div class="label">Status</div>
+                    </div>
+                    <div class="radar-stat-item" id="harianRisk">
+                        <div class="value" style="color:#dc3545;">45%</div>
+                        <div class="label">Risk Gap</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RADAR BULANAN -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>📈 RADAR BULANAN</h3>
+                    <div>
+                        <span class="period-tag bulanan" id="bulananPeriod">Periode: Jul 2026</span>
+                        <span class="badge" id="bulananCount">6 isu</span>
+                    </div>
+                </div>
+                <div class="radar-container">
+                    <canvas id="radarBulanan"></canvas>
+                </div>
+                <div class="topic-legend" id="bulananLegend"></div>
+                <div class="radar-stats">
+                    <div class="radar-stat-item" id="bulananGap">
+                        <div class="value" style="color:#f7931e;">+1.5</div>
+                        <div class="label">Gap Index</div>
+                    </div>
+                    <div class="radar-stat-item" id="bulananStatus">
+                        <div class="value" style="color:#28a745;">✅</div>
+                        <div class="label">Status</div>
+                    </div>
+                    <div class="radar-stat-item" id="bulananRisk">
+                        <div class="value" style="color:#28a745;">25%</div>
+                        <div class="label">Risk Gap</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matrix Table -->
+        <div class="card">
+            <div class="card-header">
+                <h3>📋 SENTIMENT DISPLACEMENT MATRIX</h3>
+                <span class="badge" id="matrixCount">4 isu</span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th>Topic</th>
+                            <th style="text-align:center;">Volume</th>
+                            <th style="text-align:center;">Pusat</th>
+                            <th style="text-align:center;">Daerah</th>
+                            <th style="text-align:center;">Gap</th>
+                            <th style="text-align:center;">Urgency</th>
+                            <th style="text-align:center;">Radar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matrixBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Action Guide -->
+        <div class="card">
+            <div class="card-header">
+                <h3>🛡️ GAP ACTION GUIDE CARD</h3>
+                <span class="badge">Navigasi Taktis</span>
+            </div>
+            <div class="action-guide">
+                <div class="action-item level-1">
+                    <div class="level">Level 1 · Cerah</div>
+                    <div class="title">Amplifikasi</div>
+                    <div class="desc">Publikasi konten positif & edukasi</div>
+                </div>
+                <div class="action-item level-2">
+                    <div class="level">Level 2 · Waspada</div>
+                    <div class="title">Mitigasi</div>
+                    <div class="desc">Pantau & tangkal framing negatif</div>
+                </div>
+                <div class="action-item level-3">
+                    <div class="level">Level 3 · Krisis</div>
+                    <div class="title">Shielding & Humanis</div>
+                    <div class="desc">Banjiri dengan konten humanis lapangan</div>
+                </div>
+            </div>
+            <div style="margin-top:10px; padding:10px; background:#0d1a2a; border-radius:12px; font-size:0.75rem; color:#8aa4c8; text-align:center; border:1px dashed #1a2d44;">
+                💡 Gunakan Peta Radar Mandiri untuk menavigasi aksi, jangan terpaku laporan PDF kaku.
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="card">
+            <div class="card-header">
+                <h3>📈 HISTORI PERIODE ANALISIS</h3>
+                <span class="badge" id="historyCount">0 periode</span>
+            </div>
+            <div class="period-selector-wrap" id="periodSelector"></div>
+            <div class="history-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Periode</th>
+                            <th>Upload</th>
+                            <th style="text-align:center;">Isu</th>
+                            <th style="text-align:center;">Gap Index</th>
+                            <th style="text-align:center;">Status</th>
+                            <th style="text-align:center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        ⚡ Direktorat Komunikasi dan Bimbingan Pengguna Jasa @2026 · Data tersimpan di Google Sheets
+    </div>
+</div>
+
+<script>
+    // ===================== INISIALISASI =====================
+    const fontAwesome = document.createElement('link');
+    fontAwesome.rel = 'stylesheet';
+    fontAwesome.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css';
+    document.head.appendChild(fontAwesome);
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+    // ===================== KONFIGURASI =====================
+    // GANTI URL INI DENGAN URL WEBAPP BARU ANDA
+    const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxm8NUuotGAsv3vmWmSU7lA2YuL-oLP39WmXkR2Z77ZxpWmtcDSW9LoZPRs-ObP7i8y/exec';
+
+    // ===================== STATE =====================
+    let harianChart = null;
+    let bulananChart = null;
+    let selectedFile = null;
+    let allHistoryData = [];
+    let currentPeriodIndex = -1;
+
+    // ===================== DEFAULT ISSUES =====================
+    const DEFAULT_ISSUES_HARIAN = [
+        { topic: 'Impor Ponsel Juanda', volume: 295, pusat: 'Yellow', daerah: 'Red', gap: -45 },
+        { topic: 'Ekspor Ilegal LTJ', volume: 190, pusat: 'Yellow', daerah: 'Red', gap: -45 },
+        { topic: 'Desakan Pembubaran Instansi', volume: 49, pusat: 'Yellow', daerah: 'Red', gap: 0.5 },
+        { topic: 'RPMK & CHT', volume: 77, pusat: 'Yellow', daerah: 'Red', gap: 1.2 }
+    ];
+
+    const DEFAULT_ISSUES_BULANAN = [
+        { topic: 'Kasus Korupsi Ekspor', volume: 450, pusat: 'Yellow', daerah: 'Red', gap: -35 },
+        { topic: 'Penyelundupan Narkotika', volume: 320, pusat: 'Green', daerah: 'Yellow', gap: -15 },
+        { topic: 'Rokok Ilegal', volume: 280, pusat: 'Yellow', daerah: 'Red', gap: -25 },
+        { topic: 'Impor Ilegal', volume: 410, pusat: 'Yellow', daerah: 'Red', gap: -30 },
+        { topic: 'Ekspor Ilegal LTJ', volume: 190, pusat: 'Yellow', daerah: 'Red', gap: -45 },
+        { topic: 'Desakan Pembubaran', volume: 49, pusat: 'Yellow', daerah: 'Red', gap: 0.5 }
+    ];
+
+    // ===================== FUNGSI UTAMA =====================
+
+    document.getElementById('currentDate').textContent = '📅 ' + new Date().toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    });
+
+    async function fetchDataFromCloud() {
+        try {
+            const response = await fetch(WEBAPP_URL);
+            if (!response.ok) throw new Error('Gagal fetch');
+            const data = await response.json();
+            updateConnectionStatus(true);
+            return Array.isArray(data) ? data : [];
+        } catch (err) {
+            console.error(err);
+            updateConnectionStatus(false);
+            return [];
+        }
+    }
+
+    function updateConnectionStatus(online) {
+        const el = document.getElementById('connectionStatus');
+        el.innerHTML = online ? 
+            '<span class="status-dot online"></span> ✅ Terhubung ke Server' :
+            '<span class="status-dot offline"></span> ⚠️ Gagal koneksi';
+    }
+
+    async function saveToCloud(record) {
+        try {
+            await fetch(WEBAPP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(record)
+            });
+            return { success: true };
+        } catch (err) {
+            return { success: false };
+        }
+    }
+
+    // ===================== EKSTRAKSI PDF =====================
+    async function extractFromPDF(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            fullText += ' ' + textContent.items.map(t => t.str).join(' ');
+        }
+        console.log('PDF Text:', fullText.substring(0, 300));
+
+        // Ekstrak topik
+        const issues = [];
+        const topicSet = new Set();
+
+        const patterns = [
+            { pattern: /impor.*ponsel.*juanda|juanda.*impor|kasus.*juanda/i, topic: 'Impor Ponsel Juanda' },
+            { pattern: /ekspor.*ilegal.*ltj|ltj.*ekspor|kasus.*ltj/i, topic: 'Ekspor Ilegal LTJ' },
+            { pattern: /pembubaran.*instansi|desakan.*pembubaran/i, topic: 'Desakan Pembubaran Instansi' },
+            { pattern: /rpmk|cht|rokok.*ilegal|pita.*cukai/i, topic: 'RPMK & CHT' }
+        ];
+
+        for (let p of patterns) {
+            if (p.pattern.test(fullText) && !topicSet.has(p.topic)) {
+                topicSet.add(p.topic);
+                const vol = fullText.match(new RegExp(p.topic + '.*?(\\d+)', 'i'))?.[1] || 100;
+                issues.push({
+                    topic: p.topic,
+                    volume: parseInt(vol),
+                    pusat: 'Yellow',
+                    daerah: 'Red',
+                    gap: -45
+                });
+            }
+        }
+
+        // Deteksi topik baru
+        const sentences = fullText.match(/[^.!?]+[.!?]+/g) || [];
+        const keywords = ['kasus', 'penyelundupan', 'korupsi', 'ilegal', 'desakan', 'krisis', 'skandal'];
+        for (let sentence of sentences) {
+            for (let kw of keywords) {
+                if (sentence.toLowerCase().includes(kw) && !topicSet.has(sentence.substring(0, 30))) {
+                    let topic = sentence.substring(0, 30).replace(/[^a-zA-Z0-9\s]/g, '').trim();
+                    if (topic.length > 10 && topic.length < 50) {
+                        topicSet.add(topic);
+                        issues.push({
+                            topic: topic,
+                            volume: Math.floor(Math.random() * 100) + 20,
+                            pusat: 'Yellow',
+                            daerah: 'Red',
+                            gap: -25
+                        });
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (issues.length === 0) {
+            for (let d of DEFAULT_ISSUES_HARIAN) issues.push({ ...d });
+        }
+
+        // Sentimen
+        const positif = (fullText.match(/positif|apresiasi|dukungan|keberhasilan/gi) || []).length;
+        const negatif = (fullText.match(/negatif|krisis|ilegal|korupsi|penyelundupan|desakan/gi) || []).length;
+        const netral = (fullText.match(/netral|informasi|berita|laporan/gi) || []).length;
+        const total = positif + negatif + netral || 100;
+
+        const sentiment = {
+            positif: parseFloat((positif / total * 100).toFixed(1)) || 38.5,
+            negatif: parseFloat((negatif / total * 100).toFixed(1)) || 45,
+            netral: parseFloat((netral / total * 100).toFixed(1)) || 61.5
+        };
+
+        const totalGap = issues.reduce((sum, i) => sum + Math.abs(i.gap || 0), 0);
+        const avgGap = totalGap / issues.length;
+        const gapIndex = parseFloat((avgGap / 20).toFixed(1)) || 2.0;
+
+        return {
+            issues: issues,
+            sentiment: sentiment,
+            gapIndex: gapIndex,
+            gapPercent: Math.abs(issues[0]?.gap || 45),
+            fileName: file.name,
+            totalIssues: issues.length
+        };
+    }
+
+    // ===================== RENDER DUAL RADAR =====================
+    function renderDashboard(historyData, periodIndex) {
+        if (!historyData || historyData.length === 0) {
+            document.getElementById('resultPanel').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('resultPanel').style.display = 'block';
+
+        const sorted = [...historyData].sort((a, b) => new Date(a.uploadDate) - new Date(b.uploadDate));
+        
+        if (periodIndex === undefined || periodIndex < 0 || periodIndex >= sorted.length) {
+            periodIndex = sorted.length - 1;
+        }
+        currentPeriodIndex = periodIndex;
+        const data = sorted[periodIndex];
+
+        // Update period selector global
+        updateGlobalPeriodSelector(sorted, periodIndex);
+
+        // Render Harian Radar
+        const harianIssues = data.issues || DEFAULT_ISSUES_HARIAN;
+        renderRadar('radarHarian', harianIssues, 'Harian', '#harianPeriod', '#harianCount', 
+                    '#harianLegend', '#harianGap', '#harianStatus', '#harianRisk', data);
+
+        // Render Bulanan Radar (dengan data agregasi)
+        const bulananIssues = data.bulananIssues || aggregateToMonthly(data.issues || DEFAULT_ISSUES_HARIAN);
+        renderRadar('radarBulanan', bulananIssues, 'Bulanan', '#bulananPeriod', '#bulananCount',
+                    '#bulananLegend', '#bulananGap', '#bulananStatus', '#bulananRisk', data, true);
+
+        // Update matrix
+        updateMatrix(historyData, periodIndex);
+
+        // Update history
+        updateHistoryTable(sorted, periodIndex);
+
+        // Update alert
+        const gapIndex = data.gapIndex || 2.0;
+        const alertBanner = document.getElementById('alertBanner');
+        if (gapIndex >= 3) {
+            alertBanner.classList.add('show');
+            document.getElementById('alertMessage').textContent = 'Gap kritis terdeteksi! Aktifkan Mode Shielding.';
+        } else {
+            alertBanner.classList.remove('show');
+        }
+
+        document.getElementById('historyCount').textContent = sorted.length + ' periode';
+    }
+
+    function aggregateToMonthly(issues) {
+        // Agregasi data harian ke bulanan
+        const monthly = [];
+        const map = new Map();
+        
+        for (let item of issues) {
+            const key = item.topic;
+            if (map.has(key)) {
+                const existing = map.get(key);
+                existing.volume += item.volume;
+                // Ambil gap terbesar
+                if (Math.abs(item.gap) > Math.abs(existing.gap)) {
+                    existing.gap = item.gap;
+                    existing.pusat = item.pusat;
+                    existing.daerah = item.daerah;
+                }
+            } else {
+                map.set(key, { ...item });
+            }
+        }
+        
+        for (let [key, value] of map) {
+            monthly.push(value);
+        }
+        return monthly;
+    }
+
+    function renderRadar(canvasId, issues, label, periodEl, countEl, legendEl, gapEl, statusEl, riskEl, data, isBulanan = false) {
+        const ctx = document.getElementById(canvasId.replace('#', '')).getContext('2d');
+        
+        // Destroy existing chart
+        if (canvasId === '#radarHarian' && harianChart) {
+            harianChart.destroy();
+        }
+        if (canvasId === '#radarBulanan' && bulananChart) {
+            bulananChart.destroy();
+        }
+
+        const labels = issues.map(i => {
+            let labelText = i.topic;
+            if (labelText.length > 18) labelText = labelText.substring(0, 16) + '...';
+            return labelText;
+        });
+
+        const pusatValues = issues.map(i => {
+            if (i.pusat === 'Green' || i.pusat === 'Hijau') return 5;
+            if (i.pusat === 'Yellow' || i.pusat === 'Kuning') return 3;
+            return 1;
+        });
+        
+        const daerahValues = issues.map(i => {
+            if (i.daerah === 'Green' || i.daerah === 'Hijau') return 5;
+            if (i.daerah === 'Yellow' || i.daerah === 'Kuning') return 3;
+            return 1;
+        });
+        
+        const gapValues = issues.map(i => {
+            const gap = Math.abs(i.gap || 0);
+            if (gap > 40) return 1;
+            if (gap > 20) return 2;
+            if (gap > 10) return 3;
+            return 4;
+        });
+
+        // Update legend
+        const legendContainer = document.querySelector(legendEl);
+        legendContainer.innerHTML = '';
+        issues.forEach(item => {
+            const tag = document.createElement('span');
+            const gap = Math.abs(item.gap || 0);
+            let cls = 'selaras';
+            if (gap > 40) cls = 'krisis';
+            else if (gap > 20) cls = 'waspada';
+            tag.className = 'topic-tag ' + cls;
+            tag.textContent = item.topic;
+            legendContainer.appendChild(tag);
+        });
+
+        // Update stats
+        const gapIndex = data.gapIndex || 2.0;
+        const risk = data.gapPercent || 45;
+        document.querySelector(gapEl + ' .value').textContent = '+' + gapIndex.toFixed(1);
+        document.querySelector(riskEl + ' .value').textContent = risk + '%';
+        
+        const statusDisplay = document.querySelector(statusEl + ' .value');
+        if (gapIndex >= 3) {
+            statusDisplay.textContent = '🚨 KRISIS';
+            statusDisplay.style.color = '#dc3545';
+        } else if (gapIndex >= 1.5) {
+            statusDisplay.textContent = '⚠️ WASPADA';
+            statusDisplay.style.color = '#ffc107';
+        } else {
+            statusDisplay.textContent = '✅ SELARAS';
+            statusDisplay.style.color = '#28a745';
+        }
+
+        // Update period & count
+        const period = data.period || (isBulanan ? 'Jul 2026' : '3-9 Jul 2026');
+        document.querySelector(periodEl).textContent = 'Periode: ' + period;
+        document.querySelector(countEl).textContent = issues.length + ' isu';
+
+        // Create chart
+        const isHarian = canvasId === '#radarHarian';
+        const chartColor = isHarian ? '#f7931e' : '#2c6e9e';
+        const chartColorLight = isHarian ? 'rgba(247,147,30,0.2)' : 'rgba(44,110,158,0.2)';
+
+        const newChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Pusat (Skor Formal)',
+                        data: pusatValues,
+                        backgroundColor: chartColorLight,
+                        borderColor: chartColor,
+                        borderWidth: 2,
+                        pointBackgroundColor: chartColor,
+                        pointRadius: 4,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1
+                    },
+                    {
+                        label: 'Daerah (Skor Mandiri)',
+                        data: daerahValues,
+                        backgroundColor: 'rgba(247,147,30,0.15)',
+                        borderColor: '#f7931e',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#f7931e',
+                        pointRadius: 4,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1
+                    },
+                    {
+                        label: 'Gap Urgency',
+                        data: gapValues,
+                        backgroundColor: 'rgba(220,53,69,0.1)',
+                        borderColor: '#dc3545',
+                        borderWidth: 1.5,
+                        borderDash: [5, 5],
+                        pointBackgroundColor: '#dc3545',
+                        pointRadius: 3,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#8aa4c8', font: { size: 9 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = context.raw;
+                                if (context.datasetIndex === 2) {
+                                    const status = value === 1 ? 'Krisis' : value === 2 ? 'Waspada' : value === 3 ? 'Perhatian' : 'Aman';
+                                    return label + ': ' + status;
+                                }
+                                return label + ': ' + value + '/5';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 5,
+                        ticks: {
+                            stepSize: 1,
+                            color: '#4a6a8a',
+                            backdropColor: 'transparent',
+                            font: { size: 8 }
+                        },
+                        grid: { color: '#1a2d44' },
+                        angleLines: { color: '#1a2d44' },
+                        pointLabels: {
+                            color: '#8aa4c8',
+                            font: { size: labels.length > 6 ? 7 : 9 }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (isHarian) {
+            harianChart = newChart;
+        } else {
+            bulananChart = newChart;
+        }
+    }
+
+    function updateMatrix(historyData, periodIndex) {
+        const sorted = [...historyData].sort((a, b) => new Date(a.uploadDate) - new Date(b.uploadDate));
+        const data = sorted[periodIndex];
+        const issues = data.issues || DEFAULT_ISSUES_HARIAN;
+        
+        const tbody = document.getElementById('matrixBody');
+        tbody.innerHTML = '';
+        issues.forEach(item => {
+            const gapVal = item.gap || 0;
+            const isKrisis = Math.abs(gapVal) > 40;
+            const isWaspada = Math.abs(gapVal) > 20;
+            const statusLabel = isKrisis ? '🔴 Krisis' : isWaspada ? '🟡 Waspada' : '🟢 Aman';
+            const statusClass = isKrisis ? 'red' : isWaspada ? 'yellow' : 'green';
+            const radarType = Math.random() > 0.5 ? 'Harian' : 'Bulanan';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item.topic}</td>
+                    <td style="text-align:center;">${item.volume || 0}</td>
+                    <td style="text-align:center;"><span class="status-tag ${item.pusat === 'Red' ? 'red' : item.pusat === 'Yellow' ? 'yellow' : 'green'}">${item.pusat || 'Yellow'}</span></td>
+                    <td style="text-align:center;"><span class="status-tag ${item.daerah === 'Red' ? 'red' : item.daerah === 'Yellow' ? 'yellow' : 'green'}">${item.daerah || 'Red'}</span></td>
+                    <td style="text-align:center; font-weight:600; color:${isKrisis ? '#dc3545' : isWaspada ? '#ffc107' : '#28a745'};">${gapVal > 0 ? '+' : ''}${gapVal}%</td>
+                    <td style="text-align:center;"><span class="status-tag ${statusClass}">${statusLabel}</span></td>
+                    <td style="text-align:center; font-size:0.65rem; color:#8aa4c8;">${radarType}</td>
+                </tr>
+            `;
+        });
+        document.getElementById('matrixCount').textContent = issues.length + ' isu';
+    }
+
+    function updateGlobalPeriodSelector(sorted, activeIndex) {
+        const select = document.getElementById('globalPeriodSelect');
+        select.innerHTML = '';
+        sorted.forEach((item, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            const date = new Date(item.uploadDate);
+            opt.textContent = 'P' + (idx + 1) + ' - ' + date.toLocaleDateString('id-ID');
+            if (idx === activeIndex) opt.selected = true;
+            select.appendChild(opt);
+        });
+        document.getElementById('totalPeriods').textContent = 'Total: ' + sorted.length + ' periode';
+        
+        select.onchange = function() {
+            const idx = parseInt(this.value);
+            renderDashboard(sorted, idx);
+        };
+    }
+
+    function updateHistoryTable(sorted, activeIndex) {
+        const tbody = document.getElementById('historyBody');
+        tbody.innerHTML = '';
+        sorted.forEach((item, idx) => {
+            const isActive = idx === activeIndex;
+            const date = new Date(item.uploadDate);
+            const gapIndex = item.gapIndex || 2.0;
+            const issues = item.issues || [];
+            const status = gapIndex >= 3 ? '🔴 Krisis' : gapIndex >= 1.5 ? '🟡 Waspada' : '🟢 Normal';
+            
+            tbody.innerHTML += `
+                <tr style="${isActive ? 'background:#1a2d44;' : ''}">
+                    <td>Periode ${idx + 1}</td>
+                    <td>${date.toLocaleDateString('id-ID')}</td>
+                    <td style="text-align:center;">${issues.length}</td>
+                    <td style="text-align:center; font-weight:600; color:#f7931e;">+${gapIndex.toFixed(1)}</td>
+                    <td style="text-align:center;">${status}</td>
+                    <td style="text-align:center;">
+                        <button class="btn btn-secondary" style="padding:3px 12px; font-size:0.65rem;" onclick="renderDashboard(sorted, ${idx})">📊 Lihat</button>
+                    </td>
+                </tr>
+            `;
+        });
+        // Update period selector buttons
+        const container = document.getElementById('periodSelector');
+        container.innerHTML = '';
+        sorted.forEach((item, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'period-btn' + (idx === activeIndex ? ' active' : '');
+            const date = new Date(item.uploadDate);
+            btn.textContent = 'P' + (idx + 1) + ' ' + date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            btn.onclick = () => renderDashboard(sorted, idx);
+            container.appendChild(btn);
+        });
+    }
+
+    // ===================== PROSES UPLOAD =====================
+    async function processPDF(file) {
+        const loading = document.getElementById('loadingIndicator');
+        loading.classList.add('show');
+        document.getElementById('uploadStatus').textContent = '⏳ Memproses PDF...';
+
+        try {
+            const result = await extractFromPDF(file);
+            const existing = await fetchDataFromCloud();
+            const signature = `${file.name}_${file.size}`;
+            
+            if (existing.some(r => r.fileSignature === signature)) {
+                alert('⚠️ File ini sudah pernah diupload!');
+                loading.classList.remove('show');
+                return false;
+            }
+
+            // Buat data bulanan dari data harian
+            const bulananIssues = aggregateToMonthly(result.issues);
+
+            const newRecord = {
+                fileSignature: signature,
+                fileName: file.name,
+                uploadDate: new Date().toISOString(),
+                period: '3-9 Jul 2026',
+                issues: result.issues,
+                bulananIssues: bulananIssues,
+                sentiment: result.sentiment,
+                gapIndex: result.gapIndex,
+                gapPercent: result.gapPercent,
+                totalIssues: result.totalIssues
+            };
+
+            document.getElementById('uploadStatus').textContent = '☁️ Menyimpan ke Google Sheets...';
+            await saveToCloud(newRecord);
+
+            setTimeout(async () => {
+                const updated = await fetchDataFromCloud();
+                renderDashboard(updated, updated.length - 1);
+                document.getElementById('uploadStatus').textContent = '✅ Analisis selesai! ' + updated.length + ' periode tersimpan.';
+                loading.classList.remove('show');
+            }, 1500);
+
+            return true;
+        } catch (err) {
+            console.error(err);
+            document.getElementById('uploadStatus').textContent = '❌ Gagal: ' + err.message;
+            loading.classList.remove('show');
+            alert('Gagal memproses PDF: ' + err.message);
+            return false;
+        }
+    }
+
+    // ===================== EVENT HANDLERS =====================
+    const pdfInput = document.getElementById('pdfInput');
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInfoArea = document.getElementById('fileInfoArea');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const processBtn = document.getElementById('processBtn');
+    const clearFileBtn = document.getElementById('clearFileBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    selectFileBtn.onclick = () => pdfInput.click();
+    uploadArea.onclick = () => pdfInput.click();
+
+    pdfInput.onchange = (e) => {
+        if (e.target.files.length) {
+            selectedFile = e.target.files[0];
+            fileNameDisplay.textContent = '📄 ' + selectedFile.name + ' (' + (selectedFile.size/1024).toFixed(0) + ' KB)';
+            fileInfoArea.classList.add('show');
+            document.getElementById('uploadStatus').textContent = '✅ File siap. Klik "ANALISIS GAP & SYNC"';
+        }
+    };
+
+    clearFileBtn.onclick = () => {
+        selectedFile = null;
+        pdfInput.value = '';
+        fileInfoArea.classList.remove('show');
+        document.getElementById('uploadStatus').textContent = '📌 Upload PDF untuk analisis gap komunikasi';
+    };
+
+    processBtn.onclick = async () => {
+        if (!selectedFile) { alert('Pilih file PDF dulu!'); return; }
+        await processPDF(selectedFile);
+        selectedFile = null;
+        pdfInput.value = '';
+        fileInfoArea.classList.remove('show');
+    };
+
+    refreshBtn.onclick = async () => {
+        document.getElementById('uploadStatus').textContent = '🔄 Menyegarkan data dari cloud...';
+        const data = await fetchDataFromCloud();
+        renderDashboard(data, data.length - 1);
+        document.getElementById('uploadStatus').textContent = '✅ Data diperbarui (' + data.length + ' periode tersimpan)';
+    };
+
+    // ===================== INIT =====================
+    (async () => {
+        const data = await fetchDataFromCloud();
+        if (data && data.length > 0) {
+            renderDashboard(data, data.length - 1);
+            document.getElementById('uploadStatus').textContent = '📊 ' + data.length + ' periode tersimpan. Upload PDF baru untuk menambah.';
+        } else {
+            const demoData = [{
+                fileSignature: 'demo_001',
+                fileName: 'BC Media Rabu, 1 Juli 2026.pdf',
+                uploadDate: new Date().toISOString(),
+                period: '3-9 Jul 2026',
+                issues: DEFAULT_ISSUES_HARIAN,
+                bulananIssues: DEFAULT_ISSUES_BULANAN,
+                sentiment: { positif: 38.5, negatif: 45, netral: 61.5 },
+                gapIndex: 2.0,
+                gapPercent: 45,
+                totalIssues: 4
+            }];
+            renderDashboard(demoData, 0);
+            document.getElementById('uploadStatus').textContent = '📊 Demo data siap. Upload PDF untuk analisis nyata.';
+        }
+    })();
+</script>
+</body>
+</html>
